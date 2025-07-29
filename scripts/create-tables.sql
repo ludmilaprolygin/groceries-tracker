@@ -61,6 +61,3 @@ CREATE INDEX IF NOT EXISTS idx_storage_locations_grocery_item_id ON storage_loca
 CREATE INDEX IF NOT EXISTS idx_item_permissions_grocery_item_id ON item_permissions(grocery_item_id);
 CREATE INDEX IF NOT EXISTS idx_item_permissions_user_id ON item_permissions(user_id);
 CREATE INDEX IF NOT EXISTS idx_access_keys_key_value ON access_keys(key_value);
-
--- Insert default access key
-INSERT INTO access_keys (key_value) VALUES ('GROCERY-2024-ABC123') ON CONFLICT DO NOTHING;

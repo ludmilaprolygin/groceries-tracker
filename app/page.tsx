@@ -1,9 +1,9 @@
 "use client"
 
-import React from "react"
+import type React from "react"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { Plus, Search, Edit2, Trash2, Package, ChevronDown, ChevronRight, MapPin, Camera } from "lucide-react"
+import { Plus, Search, Edit2, Trash2, Package, ChevronDown, ChevronRight, MapPin, Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,387 +17,25 @@ import { Users, Key, Copy, UserPlus, UserMinus, Settings, Loader2 } from "lucide
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "@/hooks/use-toast"
 import { useDatabase, type User, type GroceryItem } from "@/hooks/useDatabase"
-import { LocationGrid, KITCHEN_LOCATIONS, LAVADERO_LOCATIONS, COCINA_LOCATIONS } from "@/components/LocationGrid"
+import { KITCHEN_LOCATIONS } from "@/components/LocationGrid"
 import { QuantityAdjuster } from "@/components/QuantityAdjuster"
-import { BarcodeScanner } from "@/components/BarcodeScanner"
-import { lookupProduct } from "@/lib/productLookup"
 import { AuthGuard } from "@/components/AuthGuard"
-
-// Move FormDialogContent outside the main component to prevent recreation
-interface FormDialogContentProps {
-  formData: {
-    name: string
-    storageLocations: { location: string; quantity: string }[]
-    allowedUsers: string[]
-    selectedLocations: string[]
-    locationCategory: "lavadero" | "cocina" | "otros" | null
-    barcode?: string
-    productImage?: string
-  }
-  setFormData: React.Dispatch<
-    React.SetStateAction<{
-      name: string
-      storageLocations: { location: string; quantity: string }[]
-      allowedUsers: string[]
-      selectedLocations: string[]
-      locationCategory: "lavadero" | "cocina" | "otros" | null
-      barcode?: string
-      productImage?: string
-    }>
-  >
-  activeTab: string
-  users: User[]
-  editingItem: GroceryItem | null
-  updateStorageLocation: (index: number, field: "location" | "quantity", value: string) => void
-  toggleUserSelection: (userId: string) => void
-  handleAddItem: (e?: React.FormEvent) => void
-  handleEditItem: (e?: React.FormEvent) => void
-  handleAddToShoppingList: (e?: React.FormEvent) => void
-  onScanBarcode: () => void
-}
-
-const FormDialogContent = React.memo(
-  ({
-    formData,
-    setFormData,
-    activeTab,
-    users,
-    editingItem,
-    updateStorageLocation,
-    toggleUserSelection,
-    handleAddItem,
-    handleEditItem,
-    handleAddToShoppingList,
-    onScanBarcode,
-  }: FormDialogContentProps) => {
-    // Use local state for the name input to prevent parent re-renders
-    const [localName, setLocalName] = useState(formData.name)
-
-    // Sync local name with form data when dialog opens/closes
-    useEffect(() => {
-      setLocalName(formData.name)
-    }, [formData.name])
-
-    // Update form data with debounced name changes
-    useEffect(() => {
-      const timeoutId = setTimeout(() => {
-        if (localName !== formData.name) {
-          setFormData((prev) => ({ ...prev, name: localName }))
-        }
-      }, 100)
-
-      return () => clearTimeout(timeoutId)
-    }, [localName, formData.name, setFormData])
-
-    return (
-      <div className="grid gap-6 py-4">
-        <div className="grid gap-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="name">Product Name</Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onScanBarcode}
-              className="flex items-center gap-2 bg-transparent"
-            >
-              <Camera className="h-4 w-4" />
-              Scan Barcode
-            </Button>
-          </div>
-
-          {/* Product Image Preview */}
-          {formData.productImage && (
-            <div className="flex justify-center mb-2">
-              <img
-                src={formData.productImage || "/placeholder.svg"}
-                alt="Product"
-                className="w-20 h-20 object-cover rounded-lg border"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none"
-                }}
-              />
-            </div>
-          )}
-
-          <Input
-            id="name"
-            value={localName}
-            onChange={(e) => setLocalName(e.target.value)}
-            placeholder="e.g., Apples, Milk, Bread"
-            className="text-base"
-            autoFocus
-          />
-
-          {/* Barcode Display */}
-          {formData.barcode && (
-            <div className="text-xs text-muted-foreground text-center">Barcode: {formData.barcode}</div>
-          )}
-        </div>
-
-        {activeTab === "stock" && (
-          <>
-            {!formData.locationCategory ? (
-              <div className="grid gap-4">
-                <Label>Choose Storage Area</Label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setFormData((prev) => ({ ...prev, locationCategory: "lavadero" }))}
-                    className="min-h-[60px] md:min-h-[80px] text-base font-medium flex flex-col gap-2"
-                  >
-                    <span className="text-2xl">🧺</span>
-                    Lavadero
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setFormData((prev) => ({ ...prev, locationCategory: "cocina" }))}
-                    className="min-h-[60px] md:min-h-[80px] text-base font-medium flex flex-col gap-2"
-                  >
-                    <span className="text-2xl">🍳</span>
-                    Cocina
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setFormData((prev) => ({ ...prev, locationCategory: "otros" }))}
-                    className="min-h-[60px] md:min-h-[80px] text-base font-medium flex flex-col gap-2"
-                  >
-                    <span className="text-2xl">📦</span>
-                    Otros
-                  </Button>
-                </div>
-              </div>
-            ) : formData.locationCategory === "otros" ? (
-              <div className="grid gap-4">
-                <div className="flex items-center justify-between">
-                  <Label>Custom Location</Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        locationCategory: null,
-                        selectedLocations: [],
-                        storageLocations: [],
-                      }))
-                    }
-                  >
-                    ← Back
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  {formData.storageLocations.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Click "Add Location" to add your first custom location
-                    </div>
-                  )}
-                  {formData.storageLocations.map((location, index) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end p-3 border rounded-lg">
-                      <div className="grid gap-2">
-                        <Label>Location Name</Label>
-                        <Input
-                          placeholder="Enter location name"
-                          value={location.location}
-                          onChange={(e) => updateStorageLocation(index, "location", e.target.value)}
-                          className="text-base"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label>Quantity</Label>
-                        <div className="flex justify-center">
-                          <QuantityAdjuster
-                            value={Number.parseInt(location.quantity) || 0}
-                            onChange={(value) => updateStorageLocation(index, "quantity", value.toString())}
-                            min={0}
-                            max={999}
-                          />
-                        </div>
-                      </div>
-                      {formData.storageLocations.length > 1 && (
-                        <div className="col-span-1 md:col-span-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const updated = formData.storageLocations.filter((_, i) => i !== index)
-                              setFormData((prev) => ({ ...prev, storageLocations: updated }))
-                            }}
-                            className="text-destructive hover:text-destructive w-full"
-                          >
-                            Remove Location
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        storageLocations: [...prev.storageLocations, { location: "", quantity: "1" }],
-                      }))
-                    }
-                    className="w-full"
-                  >
-                    + Add Location
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                <div className="flex items-center justify-between">
-                  <Label>Storage Locations - {formData.locationCategory === "lavadero" ? "Lavadero" : "Cocina"}</Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        locationCategory: null,
-                        selectedLocations: [],
-                        storageLocations: [],
-                      }))
-                    }
-                  >
-                    ← Back
-                  </Button>
-                </div>
-                <LocationGrid
-                  locationType={formData.locationCategory}
-                  selectedLocations={formData.selectedLocations}
-                  onLocationSelect={(locationId) => {
-                    const locationName =
-                      (formData.locationCategory === "lavadero" ? LAVADERO_LOCATIONS : COCINA_LOCATIONS).find(
-                        (loc) => loc.id === locationId,
-                      )?.name || locationId
-                    setFormData((prev) => ({
-                      ...prev,
-                      selectedLocations: [...prev.selectedLocations, locationId],
-                      storageLocations: [...prev.storageLocations, { location: locationName, quantity: "1" }],
-                    }))
-                  }}
-                  onLocationDeselect={(locationId) => {
-                    const locationName =
-                      (formData.locationCategory === "lavadero" ? LAVADERO_LOCATIONS : COCINA_LOCATIONS).find(
-                        (loc) => loc.id === locationId,
-                      )?.name || locationId
-                    setFormData((prev) => ({
-                      ...prev,
-                      selectedLocations: prev.selectedLocations.filter((id) => id !== locationId),
-                      storageLocations: prev.storageLocations.filter((loc) => loc.location !== locationName),
-                    }))
-                  }}
-                />
-
-                {formData.storageLocations.length > 0 && (
-                  <div className="space-y-3">
-                    <Label>Adjust Quantities</Label>
-                    {formData.storageLocations.map((location, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                        <span className="font-medium">{location.location}</span>
-                        <QuantityAdjuster
-                          value={Number.parseInt(location.quantity) || 0}
-                          onChange={(value) => updateStorageLocation(index, "quantity", value.toString())}
-                          min={0}
-                          max={999}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {formData.locationCategory && (
-              <div className="grid gap-2">
-                <Label>Allowed Users</Label>
-                <div className="flex flex-wrap gap-2">
-                  {users.map((user) => (
-                    <Button
-                      key={user.id}
-                      type="button"
-                      variant={formData.allowedUsers.includes(user.id) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => toggleUserSelection(user.id)}
-                      className="flex items-center gap-2 min-h-[44px]"
-                    >
-                      <div className={`w-3 h-3 rounded-full ${user.color}`} />
-                      {user.name}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {activeTab === "shopping" && (
-          <div className="grid gap-4">
-            <div className="text-sm text-muted-foreground text-center">
-              Items added here will go to your shopping list
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="shop-quantity">Quantity</Label>
-              <div className="flex justify-center">
-                <QuantityAdjuster
-                  value={Number.parseInt(formData.storageLocations[0]?.quantity) || 1}
-                  onChange={(value) => updateStorageLocation(0, "quantity", value.toString())}
-                  min={1}
-                  max={999}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Only show the submit button if we have the required data */}
-        {(activeTab === "shopping" ||
-          (activeTab === "stock" &&
-            formData.locationCategory &&
-            formData.storageLocations.some(
-              (loc) => loc.location && loc.quantity && Number.parseInt(loc.quantity) > 0,
-            ))) && (
-          <Button
-            onClick={(e) =>
-              activeTab === "shopping" ? handleAddToShoppingList(e) : editingItem ? handleEditItem(e) : handleAddItem(e)
-            }
-            className="w-full min-h-[48px] text-base font-medium"
-            disabled={
-              !localName.trim() ||
-              (activeTab === "stock" &&
-                !formData.storageLocations.some(
-                  (loc) => loc.location && loc.quantity && Number.parseInt(loc.quantity) > 0,
-                ))
-            }
-          >
-            {activeTab === "shopping" ? "Add to Shopping List" : editingItem ? "Update Item" : "Add Item"}
-          </Button>
-        )}
-      </div>
-    )
-  },
-)
-
-FormDialogContent.displayName = "FormDialogContent"
+import { FormDialogContent } from "@/components/FormDialogContent"
+import { CategoryManager } from "@/components/CategoryManager"
 
 function GroceryTracker() {
   const {
     users,
+    categories,
     items,
     shoppingList,
     loading,
     createUser,
     updateUser,
     deleteUser,
+    createCategory,
+    updateCategory,
+    deleteCategory,
     createGroceryItem,
     updateGroceryItem,
     deleteGroceryItem,
@@ -409,7 +47,9 @@ function GroceryTracker() {
   } = useDatabase()
 
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [accessKey, setAccessKey] = useState<string>("GROCERY-2024-ABC123")
+  const [accessKey, setAccessKey] = useState<string>(
+    process.env.ACCESS_KEY || "",
+  )
   const [isUserManagementOpen, setIsUserManagementOpen] = useState(false)
   const [newUserName, setNewUserName] = useState("")
   const [joinKey, setJoinKey] = useState("")
@@ -417,6 +57,7 @@ function GroceryTracker() {
 
   const [searchTerm, setSearchTerm] = useState("")
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<GroceryItem | null>(null)
   const [formData, setFormData] = useState({
@@ -425,13 +66,8 @@ function GroceryTracker() {
     allowedUsers: [] as string[],
     selectedLocations: [] as string[],
     locationCategory: null as "lavadero" | "cocina" | "otros" | null,
-    barcode: undefined as string | undefined,
-    productImage: undefined as string | undefined,
+    categoryId: undefined as string | undefined, // ← This was the fix
   })
-
-  // Barcode scanner state
-  const [isScannerOpen, setIsScannerOpen] = useState(false)
-
   const [activeTab, setActiveTab] = useState("stock")
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [isMobile, setIsMobile] = useState(false)
@@ -472,12 +108,16 @@ function GroceryTracker() {
   // Memoize filtered items to prevent recalculation on every render
   const filteredItems = useMemo(
     () =>
-      items.filter(
-        (item) =>
+      items.filter((item) => {
+        const matchesSearch =
           item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.storageLocations.some((loc) => loc.location.toLowerCase().includes(searchTerm.toLowerCase())),
-      ),
-    [items, searchTerm],
+          item.storageLocations.some((loc) => loc.location.toLowerCase().includes(searchTerm.toLowerCase()))
+
+        const matchesCategory = selectedCategoryFilter ? item.category?.id === selectedCategoryFilter : true
+
+        return matchesSearch && matchesCategory
+      }),
+    [items, searchTerm, selectedCategoryFilter],
   )
 
   // Memoize utility functions
@@ -489,44 +129,6 @@ function GroceryTracker() {
     if (quantity <= 1) return "destructive"
     if (quantity <= 3) return "secondary"
     return "default"
-  }, [])
-
-  // Barcode scanning handler
-  const handleBarcodeScanned = useCallback(async (barcode: string) => {
-    toast({
-      title: "Looking up product...",
-      description: "Searching product database",
-    })
-
-    try {
-      const productInfo = await lookupProduct(barcode)
-
-      setFormData((prev) => ({
-        ...prev,
-        name: productInfo.name,
-        barcode: barcode,
-        productImage: productInfo.image,
-      }))
-
-      if (productInfo.found) {
-        toast({
-          title: "Product Found!",
-          description: `Added: ${productInfo.name}${productInfo.brand ? ` by ${productInfo.brand}` : ""}`,
-        })
-      } else {
-        toast({
-          title: "Product Not Found",
-          description: "You can edit the name manually",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      toast({
-        title: "Lookup Failed",
-        description: "Please enter product name manually",
-        variant: "destructive",
-      })
-    }
   }, [])
 
   // Wrap form handlers in useCallback
@@ -568,6 +170,7 @@ function GroceryTracker() {
           name: formData.name,
           storageLocations: validStorageLocations,
           allowedUsers: formData.allowedUsers.length > 0 ? formData.allowedUsers : [currentUser?.id || ""],
+          categoryId: formData.categoryId,
         })
 
         resetForm()
@@ -597,6 +200,7 @@ function GroceryTracker() {
           name: formData.name,
           storageLocations: validStorageLocations,
           allowedUsers: formData.allowedUsers,
+          categoryId: formData.categoryId,
         })
 
         setEditingItem(null)
@@ -630,8 +234,7 @@ function GroceryTracker() {
       allowedUsers: item.allowedUsers,
       selectedLocations: selectedLocationIds,
       locationCategory: null,
-      barcode: undefined,
-      productImage: undefined,
+      categoryId: item.category?.id,
     })
   }, [])
 
@@ -642,8 +245,7 @@ function GroceryTracker() {
       allowedUsers: [],
       selectedLocations: [],
       locationCategory: null,
-      barcode: undefined,
-      productImage: undefined,
+      categoryId: undefined,
     })
     setEditingItem(null)
   }, [])
@@ -655,8 +257,7 @@ function GroceryTracker() {
       allowedUsers: [],
       selectedLocations: [],
       locationCategory: null,
-      barcode: undefined,
-      productImage: undefined,
+      categoryId: undefined,
     })
     setEditingItem(null)
   }, [])
@@ -862,19 +463,17 @@ function GroceryTracker() {
             )}
           </div>
 
-          {/* Barcode Scanner */}
-          <BarcodeScanner
-            isOpen={isScannerOpen}
-            onScan={handleBarcodeScanned}
-            onClose={() => setIsScannerOpen(false)}
-          />
-
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-4 md:mb-6">
+            <TabsList className="grid w-full grid-cols-4 mb-4 md:mb-6">
               <TabsTrigger value="stock" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
                 <Package className="h-3 w-3 md:h-4 md:w-4" />
                 <span className="hidden sm:inline">Stock</span>
                 <span className="sm:hidden">📦</span>
+              </TabsTrigger>
+              <TabsTrigger value="categories" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                <Filter className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">Categories</span>
+                <span className="sm:hidden">🏷️</span>
               </TabsTrigger>
               <TabsTrigger value="shopping" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
                 <ShoppingCart className="h-3 w-3 md:h-4 md:w-4" />
@@ -911,12 +510,10 @@ function GroceryTracker() {
                 </Card>
                 <Card>
                   <CardHeader className="pb-1 md:pb-2">
-                    <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Locations</CardTitle>
+                    <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Categories</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="text-lg md:text-2xl font-bold">
-                      {new Set(items.flatMap((item) => item.storageLocations.map((loc) => loc.location))).size}
-                    </div>
+                    <div className="text-lg md:text-2xl font-bold">{categories.length}</div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -945,6 +542,31 @@ function GroceryTracker() {
                   />
                 </div>
 
+                {/* Category Filter */}
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  <Button
+                    variant={selectedCategoryFilter === null ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCategoryFilter(null)}
+                    className="flex items-center gap-2 min-h-[44px] md:min-h-auto whitespace-nowrap"
+                  >
+                    <span>📦</span>
+                    All
+                  </Button>
+                  {categories.map((category) => (
+                    <Button
+                      key={category.id}
+                      variant={selectedCategoryFilter === category.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedCategoryFilter(category.id)}
+                      className="flex items-center gap-2 min-h-[44px] md:min-h-auto whitespace-nowrap"
+                    >
+                      <span>{category.icon}</span>
+                      {category.name}
+                    </Button>
+                  ))}
+                </div>
+
                 <Dialog
                   open={isAddDialogOpen}
                   onOpenChange={(open) => {
@@ -970,13 +592,13 @@ function GroceryTracker() {
                       setFormData={setFormData}
                       activeTab={activeTab}
                       users={users}
+                      categories={categories}
                       editingItem={editingItem}
                       updateStorageLocation={updateStorageLocation}
                       toggleUserSelection={toggleUserSelection}
                       handleAddItem={handleAddItem}
                       handleEditItem={handleEditItem}
                       handleAddToShoppingList={handleAddToShoppingList}
-                      onScanBarcode={() => setIsScannerOpen(true)}
                     />
                   </DialogContent>
                 </Dialog>
@@ -990,7 +612,9 @@ function GroceryTracker() {
                 <CardContent className="p-2 md:p-6">
                   {filteredItems.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground text-sm md:text-base">
-                      {searchTerm ? "No items match your search." : "No items in stock. Add your first item!"}
+                      {searchTerm || selectedCategoryFilter
+                        ? "No items match your filters."
+                        : "No items in stock. Add your first item!"}
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -1009,7 +633,14 @@ function GroceryTracker() {
                                     <ChevronRight className="h-4 w-4 flex-shrink-0" />
                                   )}
                                   <div className="min-w-0 flex-1">
-                                    <div className="font-medium text-sm md:text-base truncate">{item.name}</div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <div className="font-medium text-sm md:text-base truncate">{item.name}</div>
+                                      {item.category && (
+                                        <Badge className={`${item.category.color} text-white text-xs`}>
+                                          {item.category.icon} {item.category.name}
+                                        </Badge>
+                                      )}
+                                    </div>
                                     <div className="text-xs md:text-sm text-muted-foreground">
                                       {item.storageLocations.length} location
                                       {item.storageLocations.length !== 1 ? "s" : ""}
@@ -1125,6 +756,12 @@ function GroceryTracker() {
                                   ))}
                                   <div className="text-xs text-muted-foreground pt-2 border-t">
                                     Added: {item.addedDate} • Total: {getTotalQuantity(item)} items
+                                    {item.category && (
+                                      <span>
+                                        {" "}
+                                        • Category: {item.category.icon} {item.category.name}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -1136,6 +773,15 @@ function GroceryTracker() {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="categories" className="space-y-4 md:space-y-6">
+              <CategoryManager
+                categories={categories}
+                onCreateCategory={createCategory}
+                onUpdateCategory={updateCategory}
+                onDeleteCategory={deleteCategory}
+              />
             </TabsContent>
 
             <TabsContent value="shopping" className="space-y-4 md:space-y-6">
@@ -1208,13 +854,13 @@ function GroceryTracker() {
                       setFormData={setFormData}
                       activeTab={activeTab}
                       users={users}
+                      categories={categories}
                       editingItem={editingItem}
                       updateStorageLocation={updateStorageLocation}
                       toggleUserSelection={toggleUserSelection}
                       handleAddItem={handleAddItem}
                       handleEditItem={handleEditItem}
                       handleAddToShoppingList={handleAddToShoppingList}
-                      onScanBarcode={() => setIsScannerOpen(true)}
                     />
                   </DialogContent>
                 </Dialog>

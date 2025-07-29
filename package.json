@@ -40,6 +40,7 @@
     "@supabase/supabase-js": "latest",
     "@zxing/library": "latest",
     "autoprefixer": "^10.4.20",
+    "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
@@ -64,8 +65,8 @@
   },
   "devDependencies": {
     "@types/node": "^22",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
     "postcss": "^8.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"

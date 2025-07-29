@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import bcrypt from "bcryptjs"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -64,50 +65,27 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
 
   const handleLogin = async () => {
     if (!loginKey.trim() || !selectedUserId) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a user and enter the access key.",
-        variant: "destructive",
-      })
-      return
+      toast({ title: "Missing Information", description: "Please select a user and enter the access key.", variant: "destructive" });
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      // Validate access key
-      const isValidKey = await validateAccessKey(loginKey.trim())
+      const user = users.find((u) => u.id === selectedUserId);
 
-      if (!isValidKey) {
-        toast({
-          title: "Invalid Access Key",
-          description: "The access key you entered is incorrect.",
-          variant: "destructive",
-        })
-        setIsLoading(false)
-        return
-      }
-
-      // Find the selected user
-      const user = users.find((u) => u.id === selectedUserId)
       if (!user) {
-        toast({
-          title: "User Not Found",
-          description: "Selected user no longer exists.",
-          variant: "destructive",
-        })
-        setIsLoading(false)
-        return
+        toast({ title: "User Not Found", description: "Selected user no longer exists.", variant: "destructive" });
+        setIsLoading(false);
+        return;
       }
 
-      // Verify user's access key matches
-      if (user.access_key !== loginKey.trim()) {
-        toast({
-          title: "Access Denied",
-          description: "This access key doesn't match the selected user.",
-          variant: "destructive",
-        })
-        setIsLoading(false)
-        return
+      const isValidKeyForUser = await bcrypt.compare(loginKey.trim(), user.access_key);
+
+
+      if (!isValidKeyForUser) {
+        toast({ title: "Access Denied", description: "This access key doesn't match the selected user.", variant: "destructive" });
+        setIsLoading(false);
+        return;
       }
 
       // Save session
@@ -147,6 +125,7 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
     try {
       // Validate access key first
       const isValidKey = await validateAccessKey(accessKey.trim())
+      const hashedKey = await bcrypt.hash(accessKey.trim(), 10)
 
       if (!isValidKey) {
         toast({
@@ -187,8 +166,9 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
       const newUser = await createUser({
         name: userName.trim(),
         color: colors[users.length % colors.length],
-        access_key: accessKey.trim(),
+        access_key: hashedKey, // 🔹 Ahora se guarda el hash, no la clave en texto plano
       })
+
 
       // Save session
       localStorage.setItem("grocery-tracker-user", JSON.stringify(newUser))

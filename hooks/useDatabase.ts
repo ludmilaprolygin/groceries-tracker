@@ -28,6 +28,15 @@ export interface User {
   access_key: string
 }
 
+export interface Category {
+  id: string
+  name: string
+  color: string
+  icon: string
+  created_at: string
+  updated_at: string
+}
+
 export interface StorageLocation {
   id: string
   location: string
@@ -40,6 +49,7 @@ export interface GroceryItem {
   storageLocations: StorageLocation[]
   allowedUsers: string[]
   addedDate: string
+  category?: Category
 }
 
 export interface ShoppingItem {
@@ -53,14 +63,66 @@ export interface ShoppingItem {
 
 export function useDatabase() {
   const [users, setUsers] = useState<User[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [items, setItems] = useState<GroceryItem[]>([])
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([])
   const [loading, setLoading] = useState(true)
 
   // Memoize the data to prevent unnecessary re-renders
   const memoizedUsers = useMemo(() => users, [users])
+  const memoizedCategories = useMemo(() => categories, [categories])
   const memoizedItems = useMemo(() => items, [items])
   const memoizedShoppingList = useMemo(() => shoppingList, [shoppingList])
+
+  // CRUD Operations for Categories
+  const createCategory = useCallback(async (categoryData: Omit<Category, "id" | "created_at" | "updated_at">) => {
+    try {
+      const { data, error } = await supabase.from("categories").insert([categoryData]).select().single()
+
+      if (error) throw error
+
+      setCategories((prev) => [...prev, data])
+      toast({ title: "Category created successfully" })
+      return data
+    } catch (error) {
+      toast({ title: "Error creating category", variant: "destructive" })
+      throw error
+    }
+  }, [])
+
+  const updateCategory = useCallback(async (id: string, updates: Partial<Category>) => {
+    try {
+      const { data, error } = await supabase
+        .from("categories")
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setCategories((prev) => prev.map((category) => (category.id === id ? data : category)))
+      toast({ title: "Category updated successfully" })
+      return data
+    } catch (error) {
+      toast({ title: "Error updating category", variant: "destructive" })
+      throw error
+    }
+  }, [])
+
+  const deleteCategory = useCallback(async (id: string) => {
+    try {
+      const { error } = await supabase.from("categories").delete().eq("id", id)
+
+      if (error) throw error
+
+      setCategories((prev) => prev.filter((category) => category.id !== id))
+      toast({ title: "Category deleted successfully" })
+    } catch (error) {
+      toast({ title: "Error deleting category", variant: "destructive" })
+      throw error
+    }
+  }, [])
 
   // CRUD Operations for Users - wrapped in useCallback to prevent re-renders
   const createUser = useCallback(async (userData: Omit<User, "id">) => {
@@ -113,12 +175,13 @@ export function useDatabase() {
       name: string
       storageLocations: { location: string; quantity: number }[]
       allowedUsers: string[]
+      categoryId?: string
     }) => {
       try {
         // Create the grocery item
         const { data: item, error: itemError } = await supabase
           .from("grocery_items")
-          .insert([{ name: itemData.name }])
+          .insert([{ name: itemData.name, category_id: itemData.categoryId }])
           .select()
           .single()
 
@@ -148,6 +211,12 @@ export function useDatabase() {
 
         if (permError) throw permError
 
+        // Get category info if provided
+        let category = undefined
+        if (itemData.categoryId) {
+          category = categories.find((cat) => cat.id === itemData.categoryId)
+        }
+
         const newItem: GroceryItem = {
           id: item.id,
           name: item.name,
@@ -158,6 +227,7 @@ export function useDatabase() {
           })),
           allowedUsers: itemData.allowedUsers,
           addedDate: item.added_date,
+          category,
         }
 
         setItems((prev) => [...prev, newItem])
@@ -168,7 +238,7 @@ export function useDatabase() {
         throw error
       }
     },
-    [],
+    [categories],
   )
 
   const updateGroceryItem = useCallback(
@@ -178,15 +248,17 @@ export function useDatabase() {
         name?: string
         storageLocations?: { location: string; quantity: number }[]
         allowedUsers?: string[]
+        categoryId?: string
       },
     ) => {
       try {
-        // Update the grocery item name if provided
-        if (updates.name) {
-          const { error: itemError } = await supabase
-            .from("grocery_items")
-            .update({ name: updates.name, updated_at: new Date().toISOString() })
-            .eq("id", id)
+        // Update the grocery item name and category if provided
+        if (updates.name !== undefined || updates.categoryId !== undefined) {
+          const updateData: any = { updated_at: new Date().toISOString() }
+          if (updates.name !== undefined) updateData.name = updates.name
+          if (updates.categoryId !== undefined) updateData.category_id = updates.categoryId
+
+          const { error: itemError } = await supabase.from("grocery_items").update(updateData).eq("id", id)
 
           if (itemError) throw itemError
         }
@@ -228,7 +300,7 @@ export function useDatabase() {
         throw error
       }
     },
-    [],
+    [categories],
   )
 
   const deleteGroceryItem = useCallback(async (id: string) => {
@@ -341,6 +413,17 @@ export function useDatabase() {
     }
   }, [])
 
+  const fetchCategories = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.from("categories").select("*").order("name", { ascending: true })
+
+      if (error) throw error
+      setCategories(data || [])
+    } catch (error) {
+      toast({ title: "Error fetching categories", variant: "destructive" })
+    }
+  }, [])
+
   const fetchGroceryItems = useCallback(async () => {
     try {
       const { data: items, error: itemsError } = await supabase
@@ -348,7 +431,8 @@ export function useDatabase() {
         .select(`
           *,
           storage_locations (*),
-          item_permissions (user_id)
+          item_permissions (user_id),
+          categories (*)
         `)
         .order("created_at", { ascending: false })
 
@@ -364,6 +448,7 @@ export function useDatabase() {
         })),
         allowedUsers: item.item_permissions.map((perm: any) => perm.user_id),
         addedDate: item.added_date,
+        category: item.categories || undefined,
       }))
 
       setItems(formattedItems)
@@ -430,21 +515,27 @@ export function useDatabase() {
     const initializeData = async () => {
       setLoading(true)
       try {
-        await Promise.all([fetchUsers(), fetchGroceryItems(), fetchShoppingList()])
+        await Promise.all([fetchUsers(), fetchCategories(), fetchGroceryItems(), fetchShoppingList()])
       } finally {
         setLoading(false)
       }
     }
 
     initializeData()
-  }, [fetchUsers, fetchGroceryItems, fetchShoppingList])
+  }, [fetchUsers, fetchCategories, fetchGroceryItems, fetchShoppingList])
 
   return {
     // Data - use memoized versions
     users: memoizedUsers,
+    categories: memoizedCategories,
     items: memoizedItems,
     shoppingList: memoizedShoppingList,
     loading,
+
+    // Category operations
+    createCategory,
+    updateCategory,
+    deleteCategory,
 
     // User operations
     createUser,
@@ -467,6 +558,7 @@ export function useDatabase() {
 
     // Refresh functions
     fetchUsers,
+    fetchCategories,
     fetchGroceryItems,
     fetchShoppingList,
   }
