@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/shared/EmptyState"
 import { FieldLabel } from "@/components/shared/FieldLabel"
 import { SectionHeader } from "@/components/shared/SectionHeader"
 import { LowStockBanner } from "@/components/shopping/LowStockBanner"
+import { MasOnlineCartDialog } from "@/components/shopping/MasOnlineCartDialog"
 import { ShoppingItemDialog } from "@/components/shopping/ShoppingItemDialog"
 import { ShoppingProgress } from "@/components/shopping/ShoppingProgress"
 import { ShoppingRow } from "@/components/shopping/ShoppingRow"
@@ -57,6 +58,8 @@ export function ShoppingView() {
       {shoppingList.length > 0 && <ShoppingProgress value={progress} />}
 
       {lowStockItems.length > 0 && <LowStockBanner count={lowStockItems.length} onAddAll={addLowStockToList} />}
+
+      {pending.length > 0 && <MasOnlineCartDialog items={pending} />}
 
       {shoppingList.length === 0 ? (
         <div className="glass rounded-lg">

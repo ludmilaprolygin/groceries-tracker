@@ -69,6 +69,16 @@ CREATE TABLE access_keys (
   expires_at TIMESTAMPTZ
 );
 
+-- Producto elegido en cada supermercado online para cada item de la lista.
+CREATE TABLE store_product_choices (
+  store TEXT NOT NULL,
+  item_key TEXT NOT NULL,
+  sku TEXT NOT NULL,
+  product_name TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (store, item_key)
+);
+
 CREATE INDEX idx_grocery_items_category_id ON grocery_items(category_id);
 CREATE INDEX idx_storage_locations_grocery_item_id ON storage_locations(grocery_item_id);
 CREATE INDEX idx_item_permissions_grocery_item_id ON item_permissions(grocery_item_id);
@@ -128,6 +138,7 @@ ALTER TABLE storage_locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shopping_list ENABLE ROW LEVEL SECURITY;
 ALTER TABLE access_keys ENABLE ROW LEVEL SECURITY;
+ALTER TABLE store_product_choices ENABLE ROW LEVEL SECURITY;
 
 -- users: cada uno ve su propia fila; los miembros ven a todos.
 -- No hay política de INSERT: el alta se hace solo con join_household().
@@ -149,6 +160,8 @@ CREATE POLICY "members_all" ON item_permissions FOR ALL TO authenticated
 CREATE POLICY "members_all" ON shopping_list FOR ALL TO authenticated
   USING (public.is_member()) WITH CHECK (public.is_member());
 CREATE POLICY "members_all" ON access_keys FOR ALL TO authenticated
+  USING (public.is_member()) WITH CHECK (public.is_member());
+CREATE POLICY "members_all" ON store_product_choices FOR ALL TO authenticated
   USING (public.is_member()) WITH CHECK (public.is_member());
 
 -- ---------- Datos iniciales ----------
