@@ -1,6 +1,6 @@
 -- =====================================================================
--- Grocery Tracker: esquema completo (base de datos nueva)
--- Ejecutar una sola vez en Supabase → SQL Editor.
+-- Grocery Tracker: esquema inicial
+-- Migración gestionada por Supabase CLI (local: `npm run db:reset`, prod: `npm run db:push`).
 -- Login con Google (Supabase Auth) + access key para unirse al hogar.
 -- =====================================================================
 
@@ -150,25 +150,3 @@ CREATE POLICY "members_all" ON shopping_list FOR ALL TO authenticated
   USING (public.is_member()) WITH CHECK (public.is_member());
 CREATE POLICY "members_all" ON access_keys FOR ALL TO authenticated
   USING (public.is_member()) WITH CHECK (public.is_member());
-
--- ---------- Datos iniciales ----------
-
-INSERT INTO categories (name, color, icon) VALUES
-('Dairy', 'bg-blue-500', '🥛'),
-('Meat & Fish', 'bg-red-500', '🥩'),
-('Fruits', 'bg-green-500', '🍎'),
-('Vegetables', 'bg-emerald-500', '🥕'),
-('Pasta & Rice', 'bg-yellow-500', '🍝'),
-('Bread & Bakery', 'bg-orange-500', '🍞'),
-('Snacks', 'bg-purple-500', '🍿'),
-('Beverages', 'bg-cyan-500', '🥤'),
-('Cleaning', 'bg-pink-500', '🧽'),
-('Personal Care', 'bg-indigo-500', '🧴'),
-('Frozen', 'bg-blue-300', '🧊'),
-('Pantry', 'bg-amber-500', '🥫');
-
--- Primera access key (para que el primer usuario pueda unirse).
--- El SQL Editor muestra el valor generado: copialo.
-INSERT INTO access_keys (key_value)
-VALUES ('GROCERY-' || upper(substr(md5(random()::text || clock_timestamp()::text), 1, 12)))
-RETURNING key_value;
