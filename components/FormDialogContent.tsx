@@ -80,12 +80,12 @@ export const FormDialogContent = React.memo(
     return (
       <div className="grid gap-7 pt-2">
         <div className="grid gap-2">
-          <FieldLabel htmlFor="name">Product</FieldLabel>
+          <FieldLabel htmlFor="name">Producto</FieldLabel>
           <Input
             id="name"
             value={localName}
             onChange={(e) => setLocalName(e.target.value)}
-            placeholder="e.g. Olive oil, Oat milk, Bread"
+            placeholder="Ej.: Aceite de oliva, Leche, Pan"
             className="h-12 text-base"
             autoFocus
           />
@@ -94,14 +94,14 @@ export const FormDialogContent = React.memo(
         {/* Category Selection */}
         <div className="grid gap-2.5">
           <FieldLabel>
-            Category <span className="normal-case tracking-normal text-muted-foreground/70">· optional</span>
+            Categoría <span className="normal-case tracking-normal text-muted-foreground/70">· opcional</span>
           </FieldLabel>
           <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 no-scrollbar sm:mx-0 sm:flex-wrap sm:px-0">
             <Chip
               active={!formData.categoryId}
               onClick={() => setFormData((prev) => ({ ...prev, categoryId: undefined }))}
             >
-              None
+              Ninguna
             </Chip>
             {categories.map((category) => (
               <Chip
@@ -120,7 +120,7 @@ export const FormDialogContent = React.memo(
           <>
             {!formData.locationCategory ? (
               <div className="grid gap-2.5">
-                <FieldLabel>Where is it stored?</FieldLabel>
+                <FieldLabel>¿Dónde se guarda?</FieldLabel>
                 <div className="grid grid-cols-3 gap-2.5">
                   {(
                     [
@@ -133,7 +133,7 @@ export const FormDialogContent = React.memo(
                       key={area.id}
                       type="button"
                       onClick={() => setFormData((prev) => ({ ...prev, locationCategory: area.id }))}
-                      className="flex aspect-[4/3] flex-col items-center justify-center gap-2 rounded-2xl border bg-card text-sm font-medium transition-all hover:-translate-y-0.5 hover:border-foreground/25 hover:shadow-sm"
+                      className="flex aspect-[4/3] flex-col items-center justify-center gap-2 rounded-lg border glass-control text-sm font-medium transition-all hover:-translate-y-0.5 hover:border-foreground/25 hover:shadow-sm"
                     >
                       <span className="text-2xl leading-none">{area.icon}</span>
                       {area.label}
@@ -144,7 +144,7 @@ export const FormDialogContent = React.memo(
             ) : formData.locationCategory === "otros" ? (
               <div className="grid gap-3">
                 <div className="flex items-center justify-between">
-                  <FieldLabel>Custom locations</FieldLabel>
+                  <FieldLabel>Ubicaciones personalizadas</FieldLabel>
                   <Button
                     type="button"
                     variant="ghost"
@@ -160,19 +160,19 @@ export const FormDialogContent = React.memo(
                     }
                   >
                     <ArrowLeft className="!size-3.5" />
-                    Change area
+                    Cambiar área
                   </Button>
                 </div>
                 <div className="space-y-2.5">
                   {formData.storageLocations.length === 0 && (
-                    <div className="rounded-2xl border border-dashed py-8 text-center text-sm text-muted-foreground">
-                      Add your first custom location
+                    <div className="rounded-lg border border-dashed py-8 text-center text-sm text-muted-foreground">
+                      Agregá tu primera ubicación
                     </div>
                   )}
                   {formData.storageLocations.map((location, index) => (
-                    <div key={index} className="flex items-center gap-2 rounded-2xl border bg-card p-2 pl-3">
+                    <div key={index} className="flex items-center gap-2 rounded-lg border glass-control p-2 pl-3">
                       <Input
-                        placeholder="Location name"
+                        placeholder="Nombre de la ubicación"
                         value={location.location}
                         onChange={(e) => updateStorageLocation(index, "location", e.target.value)}
                         className="h-10 min-w-0 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0"
@@ -188,7 +188,7 @@ export const FormDialogContent = React.memo(
                           type="button"
                           variant="ghost"
                           size="icon"
-                          aria-label="Remove location"
+                          aria-label="Quitar ubicación"
                           onClick={() => {
                             const updated = formData.storageLocations.filter((_, i) => i !== index)
                             setFormData((prev) => ({ ...prev, storageLocations: updated }))
@@ -211,14 +211,14 @@ export const FormDialogContent = React.memo(
                     }
                     className="h-11 w-full border-dashed"
                   >
-                    <Plus /> Add location
+                    <Plus /> Agregar ubicación
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="grid gap-4">
                 <div className="flex items-center justify-between">
-                  <FieldLabel>Storage area</FieldLabel>
+                  <FieldLabel>Área de guardado</FieldLabel>
                   <Button
                     type="button"
                     variant="ghost"
@@ -234,7 +234,7 @@ export const FormDialogContent = React.memo(
                     }
                   >
                     <ArrowLeft className="!size-3.5" />
-                    Change area
+                    Cambiar área
                   </Button>
                 </div>
                 <LocationGrid
@@ -266,8 +266,8 @@ export const FormDialogContent = React.memo(
 
                 {formData.storageLocations.length > 0 && (
                   <div className="grid gap-2.5">
-                    <FieldLabel>Quantities</FieldLabel>
-                    <div className="divide-y rounded-2xl border bg-card">
+                    <FieldLabel>Cantidades</FieldLabel>
+                    <div className="divide-y rounded-lg border glass-control">
                       {formData.storageLocations.map((location, index) => (
                         <div key={index} className="flex items-center justify-between gap-3 py-2 pl-4 pr-2">
                           <span className="truncate text-sm font-medium">{location.location}</span>
@@ -287,7 +287,7 @@ export const FormDialogContent = React.memo(
 
             {formData.locationCategory && (
               <div className="grid gap-2.5">
-                <FieldLabel>Shared with</FieldLabel>
+                <FieldLabel>Compartido con</FieldLabel>
                 <div className="flex flex-wrap gap-2">
                   {users.map((user) => (
                     <Chip
@@ -306,10 +306,10 @@ export const FormDialogContent = React.memo(
         )}
 
         {activeTab === "shopping" && (
-          <div className="flex items-center justify-between rounded-2xl border bg-card py-2 pl-4 pr-2">
+          <div className="flex items-center justify-between rounded-lg border glass-control py-2 pl-4 pr-2">
             <div>
-              <p className="text-sm font-medium">Quantity</p>
-              <p className="text-xs text-muted-foreground">Goes straight to your list</p>
+              <p className="text-sm font-medium">Cantidad</p>
+              <p className="text-xs text-muted-foreground">Va directo a tu lista</p>
             </div>
             <QuantityAdjuster
               value={Number.parseInt(formData.storageLocations[0]?.quantity) || 1}
@@ -329,7 +329,7 @@ export const FormDialogContent = React.memo(
             className="h-12 w-full text-[15px]"
             disabled={!localName.trim() || (activeTab === "stock" && !canSubmitStock)}
           >
-            {activeTab === "shopping" ? "Add to list" : editingItem ? "Save changes" : "Add to pantry"}
+            {activeTab === "shopping" ? "Agregar a la lista" : editingItem ? "Guardar cambios" : "Agregar al stock"}
           </Button>
         )}
       </div>

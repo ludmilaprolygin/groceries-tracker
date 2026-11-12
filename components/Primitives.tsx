@@ -49,7 +49,7 @@ export function Avatar({
       <span
         aria-hidden
         className={cn(
-          "absolute -bottom-0.5 -right-0.5 rounded-full ring-2 ring-card",
+          "absolute -bottom-0.5 -right-0.5 rounded-full ring-2 ring-white/80",
           size === "sm" ? "h-2 w-2" : "h-2.5 w-2.5",
           color ?? "bg-stone-400",
         )}
@@ -105,7 +105,7 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-muted-foreground">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-md bg-secondary text-muted-foreground">
         {icon}
       </div>
       <p className="font-display text-xl">{title}</p>
@@ -143,10 +143,10 @@ export function Chip({
       type="button"
       aria-pressed={active}
       className={cn(
-        "inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-3.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
+        "inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-md border px-3.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
         active
           ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-card text-foreground hover:border-foreground/25 hover:bg-accent",
+          : "glass-control border-border text-foreground hover:border-foreground/30 hover:bg-accent",
         className,
       )}
       {...props}

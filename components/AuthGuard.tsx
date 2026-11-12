@@ -75,7 +75,7 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
         .maybeSingle()
 
       if (error) {
-        toast({ title: "Error loading your account", description: error.message, variant: "destructive" })
+        toast({ title: "Error al cargar tu cuenta", description: error.message, variant: "destructive" })
       }
 
       if (data) {
@@ -120,7 +120,7 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
       options: { redirectTo: window.location.origin },
     })
     if (error) {
-      toast({ title: "Login Failed", description: error.message, variant: "destructive" })
+      toast({ title: "No se pudo iniciar sesión", description: error.message, variant: "destructive" })
       setIsSubmitting(false)
     }
     // On success the browser is redirected to Google
@@ -130,8 +130,8 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
     if (!session) return
     if (!userName.trim() || !accessKey.trim()) {
       toast({
-        title: "Missing Information",
-        description: "Please enter your name and the access key.",
+        title: "Faltan datos",
+        description: "Ingresá tu nombre y la clave de acceso.",
         variant: "destructive",
       })
       return
@@ -148,8 +148,8 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
       if (error) {
         const invalidKey = error.message.includes("Invalid access key")
         toast({
-          title: invalidKey ? "Invalid Access Key" : "Registration Failed",
-          description: invalidKey ? "The access key you entered is incorrect." : error.message,
+          title: invalidKey ? "Clave de acceso inválida" : "No se pudo completar el registro",
+          description: invalidKey ? "La clave de acceso que ingresaste es incorrecta." : error.message,
           variant: "destructive",
         })
         return
@@ -158,7 +158,7 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
       setCurrentUser(newUser)
       onAuthenticated(newUser)
       setAccessKey("")
-      toast({ title: "Account Created!", description: `Welcome to the grocery tracker, ${newUser.name}!` })
+      toast({ title: "¡Cuenta creada!", description: `¡Te damos la bienvenida, ${newUser.name}!` })
     } finally {
       setIsSubmitting(false)
     }
@@ -170,7 +170,7 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
     setCurrentUser(null)
     setUserName("")
     setAccessKey("")
-    toast({ title: "Logged Out", description: "You have been logged out successfully." })
+    toast({ title: "Sesión cerrada", description: "Cerraste sesión correctamente." })
   }
 
   if (isLoading) {
@@ -186,35 +186,36 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
   }
 
   return (
-    <div className="relative flex min-h-[100dvh] flex-col bg-background">
+    <div className="relative flex min-h-[100dvh] flex-col">
       {/* Soft warm glow */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[55vh] bg-[radial-gradient(ellipse_at_top,hsl(38_30%_88%),transparent_70%)] dark:opacity-20"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[55vh] bg-[radial-gradient(ellipse_at_top,hsl(0_0%_100%/0.7),transparent_70%)] dark:opacity-20"
       />
 
       <main className="relative mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-5 py-12">
-        <div className="mb-10">
+        <div className="glass rounded-lg p-6 sm:p-8">
+        <div className="mb-8">
           <BrandMark className="mb-8" />
-          <h1 className="font-display text-[2.5rem] leading-[1.05]">
+          <h1 className="font-display text-[2.25rem] leading-[1.05]">
             {session ? (
               <>
-                Almost <span className="text-muted-foreground">there.</span>
+                Ya casi <span className="text-muted-foreground">estás.</span>
               </>
             ) : (
               <>
-                Your pantry, <span className="text-muted-foreground">quietly</span> organised.
+                Tu casa, <span className="text-muted-foreground">en orden</span> sin esfuerzo.
               </>
             )}
           </h1>
           <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">
             {session ? (
               <>
-                Signed in as <span className="font-medium text-foreground">{session.user.email}</span>. Enter the access
-                key shared by a member of your household to join.
+                Iniciaste sesión como <span className="font-medium text-foreground">{session.user.email}</span>. Ingresá la clave de acceso que te
+                compartió alguien de tu grupo familiar para unirte.
               </>
             ) : (
-              "Track what you have, where it lives, and what to buy next — shared with your household."
+              "Sabé qué tenés, dónde está guardado y qué falta comprar, compartido con tu grupo familiar."
             )}
           </p>
         </div>
@@ -222,23 +223,23 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
         {!session ? (
           <Button onClick={handleGoogleLogin} className="h-12 w-full gap-3 text-[15px]" variant="outline" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="animate-spin" /> : <GoogleIcon />}
-            {isSubmitting ? "Redirecting…" : "Continue with Google"}
+            {isSubmitting ? "Redirigiendo…" : "Continuar con Google"}
           </Button>
         ) : (
           <div className="space-y-5">
             <div className="grid gap-2">
-              <FieldLabel htmlFor="new-user-name">Your name</FieldLabel>
+              <FieldLabel htmlFor="new-user-name">Tu nombre</FieldLabel>
               <Input
                 id="new-user-name"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
-                placeholder="How should we call you?"
+                placeholder="¿Cómo te llamamos?"
                 className="h-12"
               />
             </div>
 
             <div className="grid gap-2">
-              <FieldLabel htmlFor="access-key">Access key</FieldLabel>
+              <FieldLabel htmlFor="access-key">Clave de acceso</FieldLabel>
               <Input
                 id="access-key"
                 type="password"
@@ -255,18 +256,19 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
               disabled={isSubmitting || !userName.trim() || !accessKey.trim()}
             >
               {isSubmitting && <Loader2 className="animate-spin" />}
-              {isSubmitting ? "Creating account…" : "Join household"}
+              {isSubmitting ? "Creando cuenta…" : "Unirme al grupo"}
             </Button>
 
             <Button onClick={handleLogout} variant="ghost" className="w-full text-muted-foreground" disabled={isSubmitting}>
-              Use a different Google account
+              Usar otra cuenta de Google
             </Button>
           </div>
         )}
 
-        <p className="mt-10 border-t pt-6 text-xs leading-relaxed text-muted-foreground">
-          Need an access key? Ask an existing member to share it with you from the Household tab.
+        <p className="mt-8 border-t border-foreground/10 pt-5 text-xs leading-relaxed text-muted-foreground">
+          ¿No tenés clave de acceso? Pedísela a alguien del grupo: la encuentra en la sección Grupo familiar.
         </p>
+        </div>
       </main>
     </div>
   )

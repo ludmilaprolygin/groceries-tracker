@@ -6,14 +6,14 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Grocery Tracker',
-  description: 'Keep track of your household groceries and shopping list',
+  description: 'Controlá el stock de tu casa y tu lista de compras',
 }
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#f8f6f2',
+  themeColor: '#e3e4e7',
 }
 
 export default function RootLayout({
@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    <html lang="es" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body>
         {children}
         <Toaster />

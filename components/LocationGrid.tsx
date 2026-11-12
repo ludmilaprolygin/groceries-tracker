@@ -62,20 +62,20 @@ export function LocationGrid({
 
   const getLocationStyle = (type: string, isSelected: boolean) => {
     const baseStyle =
-      "relative h-16 w-[5.25rem] md:h-20 md:w-28 p-1 text-xs font-medium transition-all duration-200 flex flex-col items-center justify-center gap-0.5 touch-manipulation rounded-xl border whitespace-normal cursor-pointer"
+      "relative h-16 w-[5.25rem] md:h-20 md:w-28 p-1 text-xs font-medium transition-all duration-200 flex flex-col items-center justify-center gap-0.5 touch-manipulation rounded-md border whitespace-normal cursor-pointer"
 
     // Subtle tonal differences per furniture type, all within the neutral palette
     const typeStyles: Record<string, string> = {
-      cabinet: "bg-card",
-      tool: "bg-card",
-      shelf1: "bg-secondary/60",
+      cabinet: "glass-control",
+      tool: "glass-control",
+      shelf1: "bg-secondary/70",
       shelf2: "bg-secondary",
       appliance: "bg-muted",
     }
 
     return isSelected
       ? `${baseStyle} bg-primary text-primary-foreground border-primary shadow-md hover:bg-primary/90 hover:text-primary-foreground`
-      : `${baseStyle} ${typeStyles[type] ?? "bg-card"} border-border text-foreground hover:border-foreground/30 hover:bg-accent`
+      : `${baseStyle} ${typeStyles[type] ?? "glass-control"} border-border text-foreground hover:border-foreground/30 hover:bg-accent`
   }
 
   const getLocationIcon = (type: string) => {
@@ -120,17 +120,17 @@ export function LocationGrid({
       <div>
         <h3 className="font-display text-xl">
           {locationType === "lavadero"
-            ? "Lavadero Storage"
+            ? "Lavadero"
             : locationType === "cocina"
-              ? "Cocina Storage"
-              : "Kitchen Storage Layout"}
+              ? "Cocina"
+              : "Ubicaciones"}
         </h3>
-        <p className="text-sm text-muted-foreground">Tap the spots where you store this item</p>
+        <p className="text-sm text-muted-foreground">Tocá los lugares donde guardás este item</p>
       </div>
 
       <div className="flex justify-center">
         <div
-          className="grid gap-2 rounded-2xl border border-dashed border-border bg-muted/40 p-3 md:p-4"
+          className="grid gap-2 rounded-lg border border-dashed border-border bg-muted/40 p-3 md:p-4"
           style={{ gridTemplateColumns: `repeat(${gridCols}, 1fr)` }}
         >
           {grid.map((row, rowIndex) =>
@@ -166,7 +166,7 @@ export function LocationGrid({
       {selectedLocations.length > 0 && (
         <div>
           <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">Selected:</span> {selectedLocations.map((id) => locations.find((loc) => loc.id === id)?.name).join(", ")}
+            <span className="font-medium text-foreground">Seleccionado:</span> {selectedLocations.map((id) => locations.find((loc) => loc.id === id)?.name).join(", ")}
           </p>
         </div>
       )}
