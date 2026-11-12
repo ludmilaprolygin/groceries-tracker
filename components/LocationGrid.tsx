@@ -120,12 +120,12 @@ export function LocationGrid({
       <div>
         <h3 className="font-display text-xl">
           {locationType === "lavadero"
-            ? "Lavadero Storage"
+            ? "Lavadero"
             : locationType === "cocina"
-              ? "Cocina Storage"
-              : "Kitchen Storage Layout"}
+              ? "Cocina"
+              : "Ubicaciones"}
         </h3>
-        <p className="text-sm text-muted-foreground">Tap the spots where you store this item</p>
+        <p className="text-sm text-muted-foreground">Tocá los lugares donde guardás este item</p>
       </div>
 
       <div className="flex justify-center">
@@ -166,7 +166,7 @@ export function LocationGrid({
       {selectedLocations.length > 0 && (
         <div>
           <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">Selected:</span> {selectedLocations.map((id) => locations.find((loc) => loc.id === id)?.name).join(", ")}
+            <span className="font-medium text-foreground">Seleccionado:</span> {selectedLocations.map((id) => locations.find((loc) => loc.id === id)?.name).join(", ")}
           </p>
         </div>
       )}

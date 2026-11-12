@@ -52,7 +52,7 @@ export function QuantityAdjuster({
         size="sm"
         onClick={handleDecrement}
         disabled={value <= min}
-        aria-label="Decrease quantity"
+        aria-label="Restar"
         className="h-9 w-9 rounded-[5px] p-0 touch-manipulation md:h-8 md:w-8"
       >
         <Minus className="h-3.5 w-3.5" />
@@ -65,7 +65,7 @@ export function QuantityAdjuster({
         onChange={handleInputChange}
         min={min}
         max={max}
-        aria-label="Quantity"
+        aria-label="Cantidad"
         className="h-8 w-11 border-0 bg-transparent px-0 text-center text-base font-medium tabular-nums shadow-none focus-visible:ring-0 md:text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       />
 
@@ -75,7 +75,7 @@ export function QuantityAdjuster({
         size="sm"
         onClick={handleIncrement}
         disabled={value >= max}
-        aria-label="Increase quantity"
+        aria-label="Sumar"
         className="h-9 w-9 rounded-[5px] p-0 touch-manipulation md:h-8 md:w-8"
       >
         <Plus className="h-3.5 w-3.5" />

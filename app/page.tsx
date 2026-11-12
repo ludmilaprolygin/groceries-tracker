@@ -48,10 +48,10 @@ import { Avatar, Chip, Dot, EmptyState, FieldLabel, SectionHeader, Stat } from "
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
-  { value: "stock", label: "Stock", icon: Package },
-  { value: "shopping", label: "Lista de compras", icon: ShoppingBasket },
-  { value: "categories", label: "Categorías", icon: Tag },
-  { value: "users", label: "Grupo familiar", icon: Users },
+  { value: "stock", label: "Stock", short: "Stock", icon: Package },
+  { value: "shopping", label: "Lista de compras", short: "Lista", icon: ShoppingBasket },
+  { value: "categories", label: "Categorías", short: "Categorías", icon: Tag },
+  { value: "users", label: "Grupo familiar", short: "Grupo", icon: Users },
 ] as const
 
 const LOW_STOCK_THRESHOLD = 3
@@ -63,7 +63,7 @@ function UserMenu({ user, onOpenSettings }: { user: User; onOpenSettings: () => 
       <DropdownMenuTrigger asChild>
         <button
           className="flex items-center gap-2 rounded-full p-0.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 md:pl-3"
-          aria-label="Account menu"
+          aria-label="Menú de la cuenta"
         >
           <span className="hidden max-w-[10rem] truncate text-sm font-medium lg:inline">{user.name}</span>
           <Avatar name={user.name} color={user.color} />
@@ -76,10 +76,10 @@ function UserMenu({ user, onOpenSettings }: { user: User; onOpenSettings: () => 
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="rounded-md px-2.5 py-2" onSelect={onOpenSettings}>
-          <Settings2 className="mr-2 h-4 w-4" /> Household settings
+          <Settings2 className="mr-2 h-4 w-4" /> Ajustes del grupo familiar
         </DropdownMenuItem>
         <DropdownMenuItem className="rounded-md px-2.5 py-2 text-destructive focus:text-destructive" onSelect={logout}>
-          <LogOut className="mr-2 h-4 w-4" /> Sign out
+          <LogOut className="mr-2 h-4 w-4" /> Cerrar sesión
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -400,13 +400,13 @@ function GroceryTracker() {
     try {
       await navigator.clipboard.writeText(accessKey)
       toast({
-        title: "Access Key Copied",
-        description: "Share this key with others to give them access.",
+        title: "Clave de acceso copiada",
+        description: "Compartila con otros usuarios para darles acceso a tu grupo familiar.",
       })
     } catch (err) {
       toast({
-        title: "Copy Failed",
-        description: "Please copy the key manually.",
+        title: "Copia fallida",
+        description: "Por favor, copiá manualmente la clave de acceso.",
         variant: "destructive",
       })
     }
@@ -416,8 +416,8 @@ function GroceryTracker() {
     async (userId: string) => {
       if (userId === currentUser?.id) {
         toast({
-          title: "Cannot Remove Current User",
-          description: "You cannot remove yourself from the tracker.",
+          title: "No se puede eliminar el usuario actual",
+          description: "No puedes eliminarte a ti mismo del rastreador.",
           variant: "destructive",
         })
         return
@@ -432,7 +432,7 @@ function GroceryTracker() {
     return (
       <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-3 p-4">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">Loading your pantry…</span>
+        <span className="text-sm text-muted-foreground">Cargando tu despensa…</span>
       </div>
     )
   }
@@ -457,14 +457,14 @@ function GroceryTracker() {
       <DialogTrigger asChild>
         <Button onClick={() => (mode === "stock" ? resetForm() : resetFormForShopping())} className="h-10">
           <Plus />
-          <span className="hidden sm:inline">{mode === "stock" ? "Add item" : "Add to list"}</span>
-          <span className="sm:hidden">Add</span>
+          <span className="hidden sm:inline">{mode === "stock" ? "Agregar item" : "Agregar a la lista de compras"}</span>
+          <span className="sm:hidden">Agregar</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>
-            {mode === "shopping" ? "Add to shopping list" : editingItem ? "Edit item" : "New item"}
+            {mode === "shopping" ? "Agregar a la lista de compras" : editingItem ? "Editar item" : "Nuevo item"}
           </DialogTitle>
         </DialogHeader>
         <FormDialogContent
@@ -488,7 +488,7 @@ function GroceryTracker() {
     <li key={item.id} className="group flex items-center gap-3 px-3 py-2 md:px-4">
       <button
         onClick={() => handleToggleShoppingItem(item.id)}
-        aria-label={item.isCompleted ? `Mark ${item.name} as pending` : `Mark ${item.name} as bought`}
+        aria-label={item.isCompleted ? `Marcar ${item.name} como pendiente` : `Marcar ${item.name} como comprado`}
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
       >
         <span
@@ -522,7 +522,7 @@ function GroceryTracker() {
         variant="ghost"
         size="icon"
         onClick={() => handleDeleteShoppingItem(item.id)}
-        aria-label={`Remove ${item.name}`}
+        aria-label={`Quitar ${item.name}`}
         className="h-10 w-10 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
       >
         <X className="!size-4" />
@@ -548,7 +548,7 @@ function GroceryTracker() {
                 "md:static md:inline-flex md:h-10 md:w-auto md:rounded-md md:border md:border-border/70 md:bg-foreground/[0.04] md:p-1 md:shadow-none md:backdrop-blur-none",
               )}
             >
-              {NAV_ITEMS.map(({ value, label, icon: Icon }) => (
+              {NAV_ITEMS.map(({ value, label, short, icon: Icon }) => (
                 <TabsTrigger
                   key={value}
                   value={value}
@@ -560,7 +560,8 @@ function GroceryTracker() {
                   )}
                 >
                   <Icon className="h-5 w-5 md:h-3.5 md:w-3.5" strokeWidth={1.75} />
-                  {label}
+                  <span className="md:hidden">{short}</span>
+                  <span className="hidden md:inline">{label}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -573,23 +574,23 @@ function GroceryTracker() {
           {/* ───────────── Pantry ───────────── */}
           <TabsContent value="stock" className="mt-0 space-y-6 md:space-y-8">
             <SectionHeader
-              eyebrow={new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
-              title="Pantry"
+              eyebrow={new Date().toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" })}
+              title="Stock"
               action={itemDialog("stock")}
             />
 
             <div className="glass grid grid-cols-2 overflow-hidden rounded-lg md:grid-cols-4 [&>*]:border-foreground/10 [&>*:nth-child(-n+2)]:border-b [&>*:nth-child(odd)]:border-r md:[&>*:nth-child(-n+2)]:border-b-0 md:[&>*:not(:last-child)]:border-r">
               <Stat label="Items" value={items.length} />
-              <Stat label="Running low" value={lowStockCount} tone={lowStockCount > 0 ? "warning" : undefined} />
-              <Stat label="Units" value={totalQuantity} />
-              <Stat label="Categories" value={categories.length} />
+              <Stat label="Por acabarse" value={lowStockCount} tone={lowStockCount > 0 ? "warning" : undefined} />
+              <Stat label="Unidades" value={totalQuantity} />
+              <Stat label="Categorías" value={categories.length} />
             </div>
 
             <div className="space-y-3">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name or location"
+                  placeholder="Buscar por nombre o ubicación"
                   value={debouncedSearchTerm}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setDebouncedSearchTerm(e.target.value)
@@ -599,7 +600,7 @@ function GroceryTracker() {
                 {debouncedSearchTerm && (
                   <button
                     onClick={() => setDebouncedSearchTerm("")}
-                    aria-label="Clear search"
+                    aria-label="Borrar búsqueda"
                     className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"
                   >
                     <X className="h-4 w-4" />
@@ -630,11 +631,11 @@ function GroceryTracker() {
               {filteredItems.length === 0 ? (
                 <EmptyState
                   icon={<Package className="h-5 w-5" />}
-                  title={searchTerm || selectedCategoryFilter ? "Nothing matches" : "Your pantry is empty"}
+                  title={searchTerm || selectedCategoryFilter ? "Sin resultados" : "Tu stock está vacío"}
                   description={
                     searchTerm || selectedCategoryFilter
-                      ? "Try a different search or category."
-                      : "Add your first item to start tracking what you have at home."
+                      ? "Probá con otra búsqueda o categoría."
+                      : "Agregá tu primer item para empezar a registrar lo que tenés en casa."
                   }
                 />
               ) : (
@@ -667,8 +668,8 @@ function GroceryTracker() {
                                     </>
                                   )}
                                   <span className="shrink-0">
-                                    {item.storageLocations.length} location
-                                    {item.storageLocations.length !== 1 ? "s" : ""}
+                                    {item.storageLocations.length}{" "}
+                                    {item.storageLocations.length !== 1 ? "ubicaciones" : "ubicación"}
                                   </span>
                                 </p>
                               </div>
@@ -693,7 +694,7 @@ function GroceryTracker() {
                                 </span>
                                 {isLow && (
                                   <span className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-warning">
-                                    Low
+                                    Bajo
                                   </span>
                                 )}
                               </div>
@@ -757,7 +758,7 @@ function GroceryTracker() {
                               </div>
 
                               <div className="mt-3 flex items-center justify-between gap-3">
-                                <p className="text-xs text-muted-foreground">Added {item.addedDate}</p>
+                                <p className="text-xs text-muted-foreground">Agregado el {item.addedDate}</p>
                                 <div className="flex gap-1">
                                   <Button
                                     variant="ghost"
@@ -768,7 +769,7 @@ function GroceryTracker() {
                                     }}
                                     className="h-9 text-muted-foreground hover:text-foreground"
                                   >
-                                    <Pencil className="!size-3.5" /> Edit
+                                    <Pencil className="!size-3.5" /> Editar
                                   </Button>
                                   <Button
                                     variant="ghost"
@@ -776,7 +777,7 @@ function GroceryTracker() {
                                     onClick={() => handleDeleteItem(item.id)}
                                     className="h-9 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                                   >
-                                    <Trash2 className="!size-3.5" /> Delete
+                                    <Trash2 className="!size-3.5" /> Borrar
                                   </Button>
                                 </div>
                               </div>
@@ -804,11 +805,11 @@ function GroceryTracker() {
           {/* ───────────── Shopping list ───────────── */}
           <TabsContent value="shopping" className="mt-0 space-y-6 md:space-y-8">
             <SectionHeader
-              eyebrow="To buy"
-              title="Shopping list"
+              eyebrow="Para comprar"
+              title="Lista de compras"
               description={
                 shoppingList.length
-                  ? `${pendingShopping.length} remaining · ${completedShopping.length} in the basket`
+                  ? `${pendingShopping.length} ${pendingShopping.length === 1 ? "pendiente" : "pendientes"} · ${completedShopping.length} en el changuito`
                   : undefined
               }
               action={itemDialog("shopping")}
@@ -827,12 +828,12 @@ function GroceryTracker() {
               <div className="flex items-center justify-between gap-4 glass rounded-lg border-l-2 !border-l-warning p-4">
                 <div className="min-w-0">
                   <p className="text-sm font-medium">
-                    {lowStockCount} {lowStockCount === 1 ? "item is" : "items are"} running low
+                    {lowStockCount} {lowStockCount === 1 ? "item se está acabando" : "items se están acabando"}
                   </p>
-                  <p className="text-xs text-muted-foreground">Add them to your list in one tap.</p>
+                  <p className="text-xs text-muted-foreground">Agregalos a la lista con un toque.</p>
                 </div>
                 <Button onClick={addLowStockToShoppingList} variant="outline" size="sm" className="shrink-0">
-                  <Plus /> Add all
+                  <Plus /> Agregar todos
                 </Button>
               </div>
             )}
@@ -841,8 +842,8 @@ function GroceryTracker() {
               <div className="glass rounded-lg">
                 <EmptyState
                   icon={<ShoppingBasket className="h-5 w-5" />}
-                  title="Nothing to buy"
-                  description="Add items manually or pull in what's running low in your pantry."
+                  title="No hay nada para comprar"
+                  description="Agregá items a mano o sumá los que se están acabando en tu stock."
                 />
               </div>
             ) : (
@@ -854,7 +855,7 @@ function GroceryTracker() {
                 )}
                 {completedShopping.length > 0 && (
                   <div className="space-y-2.5">
-                    <FieldLabel className="block px-1">In the basket</FieldLabel>
+                    <FieldLabel className="block px-1">En el changuito</FieldLabel>
                     <ul className="divide-y divide-border/70 glass overflow-hidden rounded-lg opacity-80">
                       {completedShopping.map(renderShoppingRow)}
                     </ul>
@@ -866,7 +867,7 @@ function GroceryTracker() {
 
           {/* ───────────── Household ───────────── */}
           <TabsContent value="users" className="mt-0 space-y-6 md:space-y-8">
-            <SectionHeader eyebrow="Household" title="Members" />
+            <SectionHeader eyebrow="Grupo familiar" title="Miembros" />
 
             <div className="grid gap-4 md:grid-cols-5 md:gap-6">
               <div className="space-y-4 md:col-span-2 md:space-y-6">
@@ -882,9 +883,9 @@ function GroceryTracker() {
 
                 <div className="space-y-4 glass rounded-lg p-5">
                   <div>
-                    <FieldLabel>Access key</FieldLabel>
+                    <FieldLabel>Clave de acceso</FieldLabel>
                     <p className="mt-1.5 text-sm text-muted-foreground">
-                      Share this key so others can join your household.
+                      Compartí esta clave para que otras personas se unan a tu grupo familiar.
                     </p>
                   </div>
                   <div className="flex items-center gap-1 rounded-md border bg-white/45 dark:bg-white/5 p-1 pl-3.5">
@@ -893,14 +894,14 @@ function GroceryTracker() {
                       onClick={copyAccessKey}
                       variant="ghost"
                       size="icon"
-                      aria-label="Copy access key"
+                      aria-label="Copiar clave de acceso"
                       className="h-9 w-9 shrink-0 rounded-lg"
                     >
                       <Copy className="!size-4" />
                     </Button>
                   </div>
                   <Button onClick={regenerateAccessKey} variant="outline" size="sm" className="w-full">
-                    <RefreshCw className="!size-3.5" /> Regenerate key
+                    <RefreshCw className="!size-3.5" /> Generar nueva clave
                   </Button>
                 </div>
               </div>
@@ -918,7 +919,7 @@ function GroceryTracker() {
                             {user.name}
                             {isMe && (
                               <span className="rounded-[4px] bg-foreground/[0.06] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                                You
+                                Vos
                               </span>
                             )}
                           </p>
@@ -932,7 +933,7 @@ function GroceryTracker() {
                             variant="ghost"
                             size="icon"
                             onClick={() => removeUser(user.id)}
-                            aria-label={`Remove ${user.name}`}
+                            aria-label={`Quitar a ${user.name}`}
                             className="h-10 w-10 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                           >
                             <UserMinus className="!size-4" />

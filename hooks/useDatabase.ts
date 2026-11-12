@@ -83,10 +83,10 @@ export function useDatabase() {
       if (error) throw error
 
       setCategories((prev) => [...prev, data])
-      toast({ title: "Category created successfully" })
+      toast({ title: "Categoría creada" })
       return data
     } catch (error) {
-      toast({ title: "Error creating category", variant: "destructive" })
+      toast({ title: "Error al crear la categoría", variant: "destructive" })
       throw error
     }
   }, [])
@@ -103,10 +103,10 @@ export function useDatabase() {
       if (error) throw error
 
       setCategories((prev) => prev.map((category) => (category.id === id ? data : category)))
-      toast({ title: "Category updated successfully" })
+      toast({ title: "Categoría actualizada" })
       return data
     } catch (error) {
-      toast({ title: "Error updating category", variant: "destructive" })
+      toast({ title: "Error al actualizar la categoría", variant: "destructive" })
       throw error
     }
   }, [])
@@ -118,9 +118,9 @@ export function useDatabase() {
       if (error) throw error
 
       setCategories((prev) => prev.filter((category) => category.id !== id))
-      toast({ title: "Category deleted successfully" })
+      toast({ title: "Categoría eliminada" })
     } catch (error) {
-      toast({ title: "Error deleting category", variant: "destructive" })
+      toast({ title: "Error al eliminar la categoría", variant: "destructive" })
       throw error
     }
   }, [])
@@ -133,10 +133,10 @@ export function useDatabase() {
       if (error) throw error
 
       setUsers((prev) => [...prev, data])
-      toast({ title: "User created successfully" })
+      toast({ title: "Usuario creado" })
       return data
     } catch (error) {
-      toast({ title: "Error creating user", variant: "destructive" })
+      toast({ title: "Error al crear el usuario", variant: "destructive" })
       throw error
     }
   }, [])
@@ -148,10 +148,10 @@ export function useDatabase() {
       if (error) throw error
 
       setUsers((prev) => prev.map((user) => (user.id === id ? data : user)))
-      toast({ title: "User updated successfully" })
+      toast({ title: "Usuario actualizado" })
       return data
     } catch (error) {
-      toast({ title: "Error updating user", variant: "destructive" })
+      toast({ title: "Error al actualizar el usuario", variant: "destructive" })
       throw error
     }
   }, [])
@@ -163,9 +163,9 @@ export function useDatabase() {
       if (error) throw error
 
       setUsers((prev) => prev.filter((user) => user.id !== id))
-      toast({ title: "User deleted successfully" })
+      toast({ title: "Usuario eliminado" })
     } catch (error) {
-      toast({ title: "Error deleting user", variant: "destructive" })
+      toast({ title: "Error al eliminar el usuario", variant: "destructive" })
       throw error
     }
   }, [])
@@ -232,10 +232,10 @@ export function useDatabase() {
         }
 
         setItems((prev) => [...prev, newItem])
-        toast({ title: "Item created successfully" })
+        toast({ title: "Item agregado" })
         return newItem
       } catch (error) {
-        toast({ title: "Error creating item", variant: "destructive" })
+        toast({ title: "Error al agregar el item", variant: "destructive" })
         throw error
       }
     },
@@ -295,9 +295,9 @@ export function useDatabase() {
 
         // Refresh the item
         await fetchGroceryItems()
-        toast({ title: "Item updated successfully" })
+        toast({ title: "Item actualizado" })
       } catch (error) {
-        toast({ title: "Error updating item", variant: "destructive" })
+        toast({ title: "Error al actualizar el item", variant: "destructive" })
         throw error
       }
     },
@@ -311,9 +311,9 @@ export function useDatabase() {
       if (error) throw error
 
       setItems((prev) => prev.filter((item) => item.id !== id))
-      toast({ title: "Item deleted successfully" })
+      toast({ title: "Item eliminado" })
     } catch (error) {
-      toast({ title: "Error deleting item", variant: "destructive" })
+      toast({ title: "Error al eliminar el item", variant: "destructive" })
       throw error
     }
   }, [])
@@ -346,10 +346,10 @@ export function useDatabase() {
       }
 
       setShoppingList((prev) => [...prev, newItem])
-      toast({ title: "Shopping item added successfully" })
+      toast({ title: "Agregado a la lista de compras" })
       return newItem
     } catch (error) {
-      toast({ title: "Error adding shopping item", variant: "destructive" })
+      toast({ title: "Error al agregar a la lista de compras", variant: "destructive" })
       throw error
     }
   }, [])
@@ -383,7 +383,7 @@ export function useDatabase() {
       setShoppingList((prev) => prev.map((item) => (item.id === id ? updatedItem : item)))
       return updatedItem
     } catch (error) {
-      toast({ title: "Error updating shopping item", variant: "destructive" })
+      toast({ title: "Error al actualizar la lista de compras", variant: "destructive" })
       throw error
     }
   }, [])
@@ -395,9 +395,9 @@ export function useDatabase() {
       if (error) throw error
 
       setShoppingList((prev) => prev.filter((item) => item.id !== id))
-      toast({ title: "Shopping item deleted successfully" })
+      toast({ title: "Quitado de la lista de compras" })
     } catch (error) {
-      toast({ title: "Error deleting shopping item", variant: "destructive" })
+      toast({ title: "Error al quitar de la lista de compras", variant: "destructive" })
       throw error
     }
   }, [])
@@ -410,7 +410,7 @@ export function useDatabase() {
       if (error) throw error
       setUsers(data || [])
     } catch (error) {
-      toast({ title: "Error fetching users", variant: "destructive" })
+      toast({ title: "Error al cargar los usuarios", variant: "destructive" })
     }
   }, [])
 
@@ -421,7 +421,7 @@ export function useDatabase() {
       if (error) throw error
       setCategories(data || [])
     } catch (error) {
-      toast({ title: "Error fetching categories", variant: "destructive" })
+      toast({ title: "Error al cargar las categorías", variant: "destructive" })
     }
   }, [])
 
@@ -454,7 +454,7 @@ export function useDatabase() {
 
       setItems(formattedItems)
     } catch (error) {
-      toast({ title: "Error fetching grocery items", variant: "destructive" })
+      toast({ title: "Error al cargar el stock", variant: "destructive" })
     }
   }, [])
 
@@ -475,7 +475,7 @@ export function useDatabase() {
 
       setShoppingList(formattedItems)
     } catch (error) {
-      toast({ title: "Error fetching shopping list", variant: "destructive" })
+      toast({ title: "Error al cargar la lista de compras", variant: "destructive" })
     }
   }, [])
 
@@ -505,7 +505,7 @@ export function useDatabase() {
       if (error) throw error
       return newKey
     } catch (error) {
-      toast({ title: "Error generating access key", variant: "destructive" })
+      toast({ title: "Error al generar la clave de acceso", variant: "destructive" })
       throw error
     }
   }, [])
