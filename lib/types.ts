@@ -37,4 +37,9 @@ export interface ShoppingItem {
   location: string
   isCompleted: boolean
   addedDate: string
+  categoryId?: string | null
+  /** Stock item this entry refers to, when known. */
+  groceryItemId?: string | null
+  /** Stock location where the purchase was added; null while it hasn't been added to stock. */
+  stockedLocation?: string | null
 }

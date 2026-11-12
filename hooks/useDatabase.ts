@@ -8,6 +8,25 @@ import type { User, Category, GroceryItem, ShoppingItem } from "@/lib/types"
 
 export type { User, Category, StorageLocation, GroceryItem, ShoppingItem } from "@/lib/types"
 
+/** Optional flags for operations triggered indirectly (e.g. by the shopping list), which report on their own. */
+interface OpOptions {
+  silent?: boolean
+}
+
+function toShoppingItem(row: any): ShoppingItem {
+  return {
+    id: row.id,
+    name: row.name,
+    quantity: row.quantity,
+    location: row.location,
+    isCompleted: row.is_completed,
+    addedDate: row.added_date,
+    categoryId: row.category_id ?? null,
+    groceryItemId: row.grocery_item_id ?? null,
+    stockedLocation: row.stocked_location ?? null,
+  }
+}
+
 export function useDatabase() {
   const [users, setUsers] = useState<User[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -123,7 +142,7 @@ export function useDatabase() {
       storageLocations: { location: string; quantity: number }[]
       allowedUsers: string[]
       categoryId?: string
-    }) => {
+    }, options: OpOptions = {}) => {
       try {
         // Create the grocery item
         const { data: item, error: itemError } = await supabase
@@ -154,9 +173,10 @@ export function useDatabase() {
           user_id: userId,
         }))
 
-        const { error: permError } = await supabase.from("item_permissions").insert(permissionsData)
-
-        if (permError) throw permError
+        if (permissionsData.length > 0) {
+          const { error: permError } = await supabase.from("item_permissions").insert(permissionsData)
+          if (permError) throw permError
+        }
 
         // Get category info if provided
         let category = undefined
@@ -178,7 +198,7 @@ export function useDatabase() {
         }
 
         setItems((prev) => [...prev, newItem])
-        toast({ title: "Item agregado" })
+        if (!options.silent) toast({ title: "Item agregado" })
         return newItem
       } catch (error) {
         toast({ title: "Error al agregar el item", variant: "destructive" })
@@ -197,6 +217,7 @@ export function useDatabase() {
         allowedUsers?: string[]
         categoryId?: string
       },
+      options: OpOptions = {},
     ) => {
       try {
         // Update the grocery item name and category if provided
@@ -241,7 +262,7 @@ export function useDatabase() {
 
         // Refresh the item
         await fetchGroceryItems()
-        toast({ title: "Item actualizado" })
+        if (!options.silent) toast({ title: "Item actualizado" })
       } catch (error) {
         toast({ title: "Error al actualizar el item", variant: "destructive" })
         throw error
@@ -250,14 +271,14 @@ export function useDatabase() {
     [categories],
   )
 
-  const deleteGroceryItem = useCallback(async (id: string) => {
+  const deleteGroceryItem = useCallback(async (id: string, options: OpOptions = {}) => {
     try {
       const { error } = await supabase.from("grocery_items").delete().eq("id", id)
 
       if (error) throw error
 
       setItems((prev) => prev.filter((item) => item.id !== id))
-      toast({ title: "Item eliminado" })
+      if (!options.silent) toast({ title: "Item eliminado" })
     } catch (error) {
       toast({ title: "Error al eliminar el item", variant: "destructive" })
       throw error
@@ -275,6 +296,8 @@ export function useDatabase() {
             quantity: itemData.quantity,
             location: itemData.location,
             is_completed: itemData.isCompleted,
+            category_id: itemData.categoryId ?? null,
+            grocery_item_id: itemData.groceryItemId ?? null,
           },
         ])
         .select()
@@ -282,14 +305,7 @@ export function useDatabase() {
 
       if (error) throw error
 
-      const newItem: ShoppingItem = {
-        id: data.id,
-        name: data.name,
-        quantity: data.quantity,
-        location: data.location,
-        isCompleted: data.is_completed,
-        addedDate: data.added_date,
-      }
+      const newItem = toShoppingItem(data)
 
       setShoppingList((prev) => [...prev, newItem])
       toast({ title: "Agregado a la lista de compras" })
@@ -309,6 +325,9 @@ export function useDatabase() {
           quantity: updates.quantity,
           location: updates.location,
           is_completed: updates.isCompleted,
+          category_id: updates.categoryId,
+          grocery_item_id: updates.groceryItemId,
+          stocked_location: updates.stockedLocation,
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)
@@ -317,14 +336,7 @@ export function useDatabase() {
 
       if (error) throw error
 
-      const updatedItem: ShoppingItem = {
-        id: data.id,
-        name: data.name,
-        quantity: data.quantity,
-        location: data.location,
-        isCompleted: data.is_completed,
-        addedDate: data.added_date,
-      }
+      const updatedItem = toShoppingItem(data)
 
       setShoppingList((prev) => prev.map((item) => (item.id === id ? updatedItem : item)))
       return updatedItem
@@ -410,14 +422,7 @@ export function useDatabase() {
 
       if (error) throw error
 
-      const formattedItems: ShoppingItem[] = (data || []).map((item) => ({
-        id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        location: item.location,
-        isCompleted: item.is_completed,
-        addedDate: item.added_date,
-      }))
+      const formattedItems: ShoppingItem[] = (data || []).map(toShoppingItem)
 
       setShoppingList(formattedItems)
     } catch (error) {

@@ -13,3 +13,19 @@ export function isLowStock(item: GroceryItem): boolean {
 export function today(): string {
   return new Date().toISOString().split("T")[0]
 }
+
+/** Normalized product name for comparisons ("Leche  Entera" → "leche entera"). */
+export function normalizeName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+/** Stock item with the same (normalized) name, if any. */
+export function findStockItemByName(items: GroceryItem[], name: string): GroceryItem | undefined {
+  const key = normalizeName(name)
+  return items.find((item) => normalizeName(item.name) === key)
+}

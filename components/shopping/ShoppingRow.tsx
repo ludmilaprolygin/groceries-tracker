@@ -1,22 +1,43 @@
 "use client"
 
-import { Check, X } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Check, Loader2, X } from "lucide-react"
+import { QuantityAdjuster } from "@/components/shared/QuantityAdjuster"
 import { Button } from "@/components/ui/button"
-import type { ShoppingItem } from "@/lib/types"
+import type { Category, ShoppingItem } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 interface ShoppingRowProps {
   item: ShoppingItem
+  category?: Category
+  /** Stock is being updated for this entry. */
+  busy?: boolean
   onToggle: (item: ShoppingItem) => void
   onDelete: (item: ShoppingItem) => void
+  onQuantityChange: (item: ShoppingItem, quantity: number) => void
 }
 
-export function ShoppingRow({ item, onToggle, onDelete }: ShoppingRowProps) {
+/** Wait this long after the last tap before saving, so quick +/+/+ taps become one update. */
+const QUANTITY_COMMIT_DELAY = 600
+
+export function ShoppingRow({ item, category, busy, onToggle, onDelete, onQuantityChange }: ShoppingRowProps) {
+  const [draft, setDraft] = useState(item.quantity)
+
+  // Follow changes coming from the server (or from other members of the household)
+  useEffect(() => setDraft(item.quantity), [item.quantity])
+
+  useEffect(() => {
+    if (busy || draft === item.quantity || draft < 1) return
+    const timer = setTimeout(() => onQuantityChange(item, draft), QUANTITY_COMMIT_DELAY)
+    return () => clearTimeout(timer)
+  }, [draft, busy, item, onQuantityChange])
+
   return (
     <li className="group flex items-center gap-3 px-3 py-2 md:px-4">
       <button
         type="button"
         onClick={() => onToggle(item)}
+        disabled={busy}
         aria-label={item.isCompleted ? `Marcar ${item.name} como pendiente` : `Marcar ${item.name} como comprado`}
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
       >
@@ -28,11 +49,20 @@ export function ShoppingRow({ item, onToggle, onDelete }: ShoppingRowProps) {
               : "border-foreground/25 group-hover:border-foreground/50",
           )}
         >
-          {item.isCompleted && <Check className="h-3.5 w-3.5" strokeWidth={2.5} />}
+          {busy ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            item.isCompleted && <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+          )}
         </span>
       </button>
 
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        {category && (
+          <span className="shrink-0 text-base leading-none" title={category.name}>
+            {category.icon}
+          </span>
+        )}
         <p
           className={cn(
             "truncate text-[15px] transition-colors",
@@ -43,9 +73,7 @@ export function ShoppingRow({ item, onToggle, onDelete }: ShoppingRowProps) {
         </p>
       </div>
 
-      <span className="shrink-0 rounded-[4px] bg-foreground/[0.06] px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
-        ×{item.quantity}
-      </span>
+      <QuantityAdjuster value={draft} onChange={setDraft} min={1} max={999} className="shrink-0" />
 
       <Button
         variant="ghost"

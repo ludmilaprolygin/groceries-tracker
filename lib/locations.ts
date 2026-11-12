@@ -21,6 +21,9 @@ export const STORAGE_AREAS: { id: StorageArea; label: string; icon: string }[] =
   { id: "otros", label: "Otros", icon: "📦" },
 ]
 
+/** Where products bought from the shopping list land when they weren't in stock yet. */
+export const UNSORTED_LOCATION = "Por ubicar"
+
 /** Quick suggestions offered in the "otros" area. */
 export const OTROS_PRESETS = ["Mesada"]
 
