@@ -1,16 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
-import { Instrument_Serif } from 'next/font/google'
 import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
-
-const display = Instrument_Serif({
-  subsets: ['latin'],
-  weight: '400',
-  style: ['normal', 'italic'],
-  variable: '--font-display',
-})
 
 export const metadata: Metadata = {
   title: 'Grocery Tracker',
@@ -30,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable} ${display.variable}`}>
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body>
         {children}
         <Toaster />

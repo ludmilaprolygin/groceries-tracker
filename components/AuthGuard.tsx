@@ -196,14 +196,14 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
       <main className="relative mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-5 py-12">
         <div className="mb-10">
           <BrandMark className="mb-8" />
-          <h1 className="font-display text-[2.75rem] leading-[1.02] tracking-tight">
+          <h1 className="font-display text-[2.5rem] leading-[1.05]">
             {session ? (
               <>
-                Almost <em className="text-muted-foreground">there.</em>
+                Almost <span className="text-muted-foreground">there.</span>
               </>
             ) : (
               <>
-                Your pantry, <em className="text-muted-foreground">quietly</em> organised.
+                Your pantry, <span className="text-muted-foreground">quietly</span> organised.
               </>
             )}
           </h1>

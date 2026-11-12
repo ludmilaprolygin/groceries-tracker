@@ -97,6 +97,11 @@
   html {
     -webkit-tap-highlight-color: transparent;
   }
+  /* Headings & numbers: tight, confident sans */
+  .font-display {
+    font-weight: 600;
+    letter-spacing: -0.035em;
+  }
   body {
     @apply bg-background font-sans text-foreground antialiased;
     font-feature-settings: "ss01", "cv11";

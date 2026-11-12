@@ -9,7 +9,7 @@ export function BrandMark({ className, compact = false }: { className?: string; 
           <path d="M9 9V7a3 3 0 0 1 6 0v2" strokeLinecap="round" />
         </svg>
       </span>
-      <span className={cn("font-display leading-none tracking-tight", compact ? "text-xl" : "text-2xl")}>
+      <span className={cn("font-display leading-none", compact ? "text-xl" : "text-2xl")}>
         Grocery Tracker
       </span>
     </div>
