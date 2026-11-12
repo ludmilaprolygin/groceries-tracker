@@ -5,6 +5,7 @@ import type React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Minus, Plus } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface QuantityAdjusterProps {
   value: number
@@ -21,18 +22,16 @@ export function QuantityAdjuster({
   min = 0,
   max = 999,
   step = 1,
-  className = "",
+  className,
 }: QuantityAdjusterProps) {
-  const handleIncrement = (e?: React.MouseEvent) => {
-    e?.preventDefault()
-    const newValue = Math.min(value + step, max)
-    onChange(newValue)
+  const handleIncrement = (e: React.MouseEvent) => {
+    e.preventDefault()
+    onChange(Math.min(value + step, max))
   }
 
-  const handleDecrement = (e?: React.MouseEvent) => {
-    e?.preventDefault()
-    const newValue = Math.max(value - step, min)
-    onChange(newValue)
+  const handleDecrement = (e: React.MouseEvent) => {
+    e.preventDefault()
+    onChange(Math.max(value - step, min))
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,36 +42,42 @@ export function QuantityAdjuster({
   }
 
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
+    <div
+      className={cn("inline-flex h-10 items-center rounded-md border border-input glass-control p-0.5 md:h-9", className)}
+    >
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={handleDecrement}
         disabled={value <= min}
-        className="h-10 w-10 md:h-8 md:w-8 p-0 bg-transparent min-w-[40px] min-h-[40px] md:min-w-[32px] md:min-h-[32px] touch-manipulation"
+        aria-label="Restar"
+        className="h-9 w-9 rounded-[5px] p-0 touch-manipulation md:h-8 md:w-8"
       >
-        <Minus className="h-4 w-4 md:h-3 md:w-3" />
+        <Minus className="h-3.5 w-3.5" />
       </Button>
 
       <Input
         type="number"
+        inputMode="numeric"
         value={value}
         onChange={handleInputChange}
         min={min}
         max={max}
-        className="h-10 w-16 md:h-8 md:w-16 text-center text-base md:text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none min-h-[40px] md:min-h-[32px]"
+        aria-label="Cantidad"
+        className="h-8 w-11 border-0 bg-transparent px-0 text-center text-base font-medium tabular-nums shadow-none focus-visible:ring-0 md:text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       />
 
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={handleIncrement}
         disabled={value >= max}
-        className="h-10 w-10 md:h-8 md:w-8 p-0 min-w-[40px] min-h-[40px] md:min-w-[32px] md:min-h-[32px] touch-manipulation"
+        aria-label="Sumar"
+        className="h-9 w-9 rounded-[5px] p-0 touch-manipulation md:h-8 md:w-8"
       >
-        <Plus className="h-4 w-4 md:h-3 md:w-3" />
+        <Plus className="h-3.5 w-3.5" />
       </Button>
     </div>
   )

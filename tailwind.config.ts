@@ -10,9 +10,20 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "*.{js,ts,jsx,tsx,mdx}"
   ],
+  // Category / user colors are stored in the database as class names, keep legacy ones generated
+  safelist: [
+    { pattern: /^bg-(red|green|blue|yellow|purple|pink|indigo|orange|teal|cyan|emerald|amber|gray)-500$/ },
+  ],
   theme: {
   	extend: {
+  		fontFamily: {
+  			sans: ['var(--font-geist-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+  			display: ['var(--font-geist-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+  			mono: ['var(--font-geist-mono)', 'ui-monospace', 'monospace'],
+  		},
   		colors: {
+  			warning: 'hsl(var(--warning))',
+  			success: 'hsl(var(--success))',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
