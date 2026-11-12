@@ -116,5 +116,51 @@ export function usePurchaseToStock() {
     [busyIds, addToStock, removeFromStock, updateShoppingItem],
   )
 
-  return { togglePurchased, busyIds }
+  /**
+   * Changes an entry's quantity. If it's already in the cart (and stocked), the stock at
+   * `stockedLocation` is shifted by the difference so it keeps matching what was bought.
+   */
+  const changeQuantity = useCallback(
+    async (entry: ShoppingItem, quantity: number) => {
+      const delta = quantity - entry.quantity
+      if (delta === 0 || quantity < 1 || busyIds.has(entry.id)) return
+      setBusyIds((prev) => new Set(prev).add(entry.id))
+      try {
+        const stockItem = items.find((item) => item.id === entry.groceryItemId)
+        if (!entry.isCompleted || !entry.stockedLocation || !stockItem) {
+          await updateShoppingItem(entry.id, { quantity })
+          return
+        }
+
+        const locations = plainLocations(stockItem)
+        const existing = locations.find((loc) => loc.location === entry.stockedLocation)
+        if (existing) existing.quantity += delta
+        else locations.push({ location: entry.stockedLocation, quantity: delta })
+        const remaining = locations.filter((loc) => loc.quantity > 0)
+
+        if (remaining.length === 0) {
+          await deleteGroceryItem(stockItem.id, { silent: true })
+          await updateShoppingItem(entry.id, { quantity, groceryItemId: null, stockedLocation: null })
+        } else {
+          await updateGroceryItem(stockItem.id, { storageLocations: remaining }, { silent: true })
+          await updateShoppingItem(entry.id, { quantity })
+        }
+        toast({
+          title: `${entry.name}: ${delta > 0 ? "+" : "−"}${Math.abs(delta)} al stock`,
+          description: entry.stockedLocation,
+        })
+      } catch {
+        // Errors are already reported by the data layer
+      } finally {
+        setBusyIds((prev) => {
+          const next = new Set(prev)
+          next.delete(entry.id)
+          return next
+        })
+      }
+    },
+    [busyIds, items, deleteGroceryItem, updateGroceryItem, updateShoppingItem],
+  )
+
+  return { togglePurchased, changeQuantity, busyIds }
 }

@@ -17,7 +17,7 @@ import type { ShoppingItem } from "@/lib/types"
 
 export function ShoppingView() {
   const { items, categories, shoppingList, createShoppingItem, deleteShoppingItem } = useData()
-  const { togglePurchased, busyIds } = usePurchaseToStock()
+  const { togglePurchased, changeQuantity, busyIds } = usePurchaseToStock()
 
   const lowStockItems = items.filter(isLowStock)
   const pending = shoppingList.filter((item) => !item.isCompleted)
@@ -65,6 +65,7 @@ export function ShoppingView() {
         busy={busyIds.has(item.id)}
         onToggle={togglePurchased}
         onDelete={deleteItem}
+        onQuantityChange={changeQuantity}
       />
     ))
 
