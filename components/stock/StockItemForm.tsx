@@ -12,7 +12,7 @@ import { Dot } from "@/components/shared/Dot"
 import { FieldLabel } from "@/components/shared/FieldLabel"
 import { QuantityAdjuster } from "@/components/shared/QuantityAdjuster"
 import { LocationGrid } from "@/components/stock/LocationGrid"
-import { ALL_LOCATIONS, STORAGE_AREAS, getLocationsForArea, type StorageArea } from "@/lib/locations"
+import { ALL_LOCATIONS, OTROS_PRESETS, STORAGE_AREAS, getLocationsForArea, type StorageArea } from "@/lib/locations"
 import type { Category, GroceryItem, User } from "@/lib/types"
 
 /** Values submitted by the form, ready to be persisted. */
@@ -75,8 +75,8 @@ export function StockItemForm({ item, users, categories, onSubmit }: StockItemFo
   }
 
   const locationName = (locationId: string) =>
-    (area === "lavadero" || area === "cocina" ? getLocationsForArea(area) : []).find((loc) => loc.id === locationId)
-      ?.name ?? locationId
+    (area && area !== "otros" ? getLocationsForArea(area) : []).find((loc) => loc.id === locationId)?.name ??
+    locationId
 
   const toggleUser = (userId: string) =>
     setAllowedUsers((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]))
@@ -117,7 +117,7 @@ export function StockItemForm({ item, users, categories, onSubmit }: StockItemFo
       {!area ? (
         <div className="grid gap-2.5">
           <FieldLabel>¿Dónde se guarda?</FieldLabel>
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {STORAGE_AREAS.map((option) => (
               <button
                 key={option.id}
@@ -176,14 +176,29 @@ export function StockItemForm({ item, users, categories, onSubmit }: StockItemFo
                   )}
                 </div>
               ))}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setStorageLocations((prev) => [...prev, { location: "", quantity: "1" }])}
-                className="h-11 w-full border-dashed"
-              >
-                <Plus /> Agregar ubicación
-              </Button>
+              <div className="flex gap-2">
+                {OTROS_PRESETS.filter((preset) => !storageLocations.some((loc) => loc.location === preset)).map(
+                  (preset) => (
+                    <Button
+                      key={preset}
+                      type="button"
+                      variant="outline"
+                      onClick={() => setStorageLocations((prev) => [...prev, { location: preset, quantity: "1" }])}
+                      className="h-11 flex-1 border-dashed"
+                    >
+                      <Plus /> {preset}
+                    </Button>
+                  ),
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStorageLocations((prev) => [...prev, { location: "", quantity: "1" }])}
+                  className="h-11 flex-1 border-dashed"
+                >
+                  <Plus /> Otra ubicación
+                </Button>
+              </div>
             </div>
           ) : (
             <>
