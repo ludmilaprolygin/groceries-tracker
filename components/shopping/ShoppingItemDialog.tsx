@@ -11,7 +11,7 @@ import { preserveScrollPosition } from "@/lib/utils"
 
 /** "Add to shopping list" button and its dialog. */
 export function ShoppingItemDialog() {
-  const { createShoppingItem } = useData()
+  const { items, categories, createShoppingItem } = useData()
   const [open, setOpen] = useState(false)
 
   const handleOpenChange = (next: boolean) => {
@@ -19,8 +19,18 @@ export function ShoppingItemDialog() {
     setOpen(next)
   }
 
-  const handleSubmit = async ({ name, quantity }: ShoppingItemValues) => {
-    await createShoppingItem({ name, quantity, location: "Shopping List", isCompleted: false, addedDate: today() })
+  const handleSubmit = async ({ name, quantity, categoryId, groceryItemId }: ShoppingItemValues) => {
+    const stockItem = groceryItemId ? items.find((item) => item.id === groceryItemId) : undefined
+    await createShoppingItem({
+      name,
+      quantity,
+      // Where it goes back to once bought: the stock item's main location, when it already exists
+      location: stockItem?.storageLocations[0]?.location ?? "Shopping List",
+      isCompleted: false,
+      addedDate: today(),
+      categoryId,
+      groceryItemId,
+    })
     handleOpenChange(false)
   }
 
@@ -37,7 +47,7 @@ export function ShoppingItemDialog() {
         <DialogHeader>
           <DialogTitle>Agregar a la lista de compras</DialogTitle>
         </DialogHeader>
-        <ShoppingItemForm onSubmit={handleSubmit} />
+        <ShoppingItemForm items={items} categories={categories} onSubmit={handleSubmit} />
       </DialogContent>
     </Dialog>
   )
