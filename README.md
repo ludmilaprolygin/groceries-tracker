@@ -20,7 +20,7 @@ La idea es:
 - **Next.js**
 - **React**
 - **Supabase JS SDK**
-- **bcryptjs** (para hashing de contraseñas)
+- **Supabase Auth** con proveedor **Google** (login)
 - **shadcn/ui** (para los componentes de la UI)
 
 Instalación de dependencias:

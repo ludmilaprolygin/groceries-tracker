@@ -1,216 +1,186 @@
 "use client"
 
 import type React from "react"
-import bcrypt from "bcryptjs"
+import type { Session } from "@supabase/supabase-js"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Package, Key, UserPlus, LogIn, Shield } from "lucide-react"
+import { Package, UserPlus, Shield } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import { useDatabase, type User } from "@/hooks/useDatabase"
+import { supabase } from "@/lib/supabase"
+import type { User } from "@/hooks/useDatabase"
 
 interface AuthGuardProps {
   children: React.ReactNode
   onAuthenticated: (user: User) => void
 }
 
+const USER_COLORS = [
+  "bg-red-500",
+  "bg-green-500",
+  "bg-blue-500",
+  "bg-yellow-500",
+  "bg-purple-500",
+  "bg-pink-500",
+  "bg-indigo-500",
+  "bg-orange-500",
+  "bg-teal-500",
+  "bg-cyan-500",
+]
+
+function GoogleIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.1A6.6 6.6 0 0 1 5.5 12c0-.73.13-1.44.34-2.1V7.06H2.18A11 11 0 0 0 1 12c0 1.78.43 3.45 1.18 4.94l3.66-2.84z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+      />
+    </svg>
+  )
+}
+
 export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
-  const { validateAccessKey, createUser, users, fetchUsers } = useDatabase()
 
-  // Authentication state
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [session, setSession] = useState<Session | null>(null)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Form states
-  const [accessKey, setAccessKey] = useState("")
+  // Join form (first login only)
   const [userName, setUserName] = useState("")
-  const [loginKey, setLoginKey] = useState("")
-  const [selectedUserId, setSelectedUserId] = useState("")
-  const [activeTab, setActiveTab] = useState("login")
+  const [accessKey, setAccessKey] = useState("")
 
-  // Check for existing session on mount
-  useEffect(() => {
-    const checkExistingSession = () => {
-      const savedUser = localStorage.getItem("grocery-tracker-user")
-      const savedKey = localStorage.getItem("grocery-tracker-key")
+  // Find the app user linked to the Google account
+  const loadAppUser = useCallback(
+    async (session: Session | null) => {
+      if (!session) {
+        setCurrentUser(null)
+        setIsLoading(false)
+        return
+      }
 
-      if (savedUser && savedKey) {
-        try {
-          const user = JSON.parse(savedUser)
-          setCurrentUser(user)
-          setIsAuthenticated(true)
-          onAuthenticated(user)
-        } catch (error) {
-          // Clear invalid session
-          localStorage.removeItem("grocery-tracker-user")
-          localStorage.removeItem("grocery-tracker-key")
-        }
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("auth_id", session.user.id)
+        .maybeSingle()
+
+      if (error) {
+        toast({ title: "Error loading your account", description: error.message, variant: "destructive" })
+      }
+
+      if (data) {
+        setCurrentUser(data)
+        onAuthenticated(data)
+      } else {
+        setCurrentUser(null)
+        const meta = session.user.user_metadata ?? {}
+        setUserName((prev) => prev || meta.full_name || meta.name || "")
       }
       setIsLoading(false)
-    }
+    },
+    [onAuthenticated],
+  )
 
-    checkExistingSession()
-  }, [onAuthenticated])
-
-  // Fetch users when component mounts
   useEffect(() => {
-    fetchUsers()
-  }, [fetchUsers])
+    // Remove the legacy localStorage session from the old access-key login
+    localStorage.removeItem("grocery-tracker-user")
+    localStorage.removeItem("grocery-tracker-key")
 
-  const handleLogin = async () => {
-    if (!loginKey.trim() || !selectedUserId) {
-      toast({ title: "Missing Information", description: "Please select a user and enter the access key.", variant: "destructive" });
-      return;
-    }
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      loadAppUser(data.session)
+    })
 
-    setIsLoading(true);
-    try {
-      const user = users.find((u) => u.id === selectedUserId);
-
-      if (!user) {
-        toast({ title: "User Not Found", description: "Selected user no longer exists.", variant: "destructive" });
-        setIsLoading(false);
-        return;
+    const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
+      setSession(newSession)
+      // Only re-query on real auth changes, not on token refreshes
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        // Defer: calling Supabase inside this callback can deadlock the auth client
+        setTimeout(() => loadAppUser(newSession), 0)
       }
+    })
 
-      const isValidKeyForUser = await bcrypt.compare(loginKey.trim(), user.access_key);
+    return () => listener.subscription.unsubscribe()
+  }, [loadAppUser])
 
-
-      if (!isValidKeyForUser) {
-        toast({ title: "Access Denied", description: "This access key doesn't match the selected user.", variant: "destructive" });
-        setIsLoading(false);
-        return;
-      }
-
-      // Save session
-      localStorage.setItem("grocery-tracker-user", JSON.stringify(user))
-      localStorage.setItem("grocery-tracker-key", loginKey.trim())
-
-      setCurrentUser(user)
-      setIsAuthenticated(true)
-      onAuthenticated(user)
-
-      toast({
-        title: "Welcome Back!",
-        description: `Logged in as ${user.name}`,
-      })
-    } catch (error) {
-      toast({
-        title: "Login Failed",
-        description: "An error occurred during login. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
+  const handleGoogleLogin = async () => {
+    setIsSubmitting(true)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
+    })
+    if (error) {
+      toast({ title: "Login Failed", description: error.message, variant: "destructive" })
+      setIsSubmitting(false)
     }
+    // On success the browser is redirected to Google
   }
 
-  const handleCreateUser = async () => {
+  const handleJoin = async () => {
+    if (!session) return
     if (!userName.trim() || !accessKey.trim()) {
       toast({
         title: "Missing Information",
-        description: "Please enter your name and access key.",
+        description: "Please enter your name and the access key.",
         variant: "destructive",
       })
       return
     }
 
-    setIsLoading(true)
+    setIsSubmitting(true)
     try {
-      // Validate access key first
-      const isValidKey = await validateAccessKey(accessKey.trim())
-      const hashedKey = await bcrypt.hash(accessKey.trim(), 10)
-
-      if (!isValidKey) {
-        toast({
-          title: "Invalid Access Key",
-          description: "The access key you entered is incorrect.",
-          variant: "destructive",
-        })
-        setIsLoading(false)
-        return
-      }
-
-      // Check if user name already exists
-      const existingUser = users.find((u) => u.name.toLowerCase() === userName.trim().toLowerCase())
-      if (existingUser) {
-        toast({
-          title: "User Already Exists",
-          description: "A user with this name already exists. Please choose a different name or login instead.",
-          variant: "destructive",
-        })
-        setIsLoading(false)
-        return
-      }
-
-      // Create new user
-      const colors = [
-        "bg-red-500",
-        "bg-green-500",
-        "bg-blue-500",
-        "bg-yellow-500",
-        "bg-purple-500",
-        "bg-pink-500",
-        "bg-indigo-500",
-        "bg-orange-500",
-        "bg-teal-500",
-        "bg-cyan-500",
-      ]
-
-      const newUser = await createUser({
-        name: userName.trim(),
-        color: colors[users.length % colors.length],
-        access_key: hashedKey, // 🔹 Ahora se guarda el hash, no la clave en texto plano
+      const { data: newUser, error } = await supabase.rpc("join_household", {
+        p_name: userName.trim(),
+        p_color: USER_COLORS[Math.floor(Math.random() * USER_COLORS.length)],
+        p_key: accessKey.trim(),
       })
 
-
-      // Save session
-      localStorage.setItem("grocery-tracker-user", JSON.stringify(newUser))
-      localStorage.setItem("grocery-tracker-key", accessKey.trim())
+      if (error) {
+        const invalidKey = error.message.includes("Invalid access key")
+        toast({
+          title: invalidKey ? "Invalid Access Key" : "Registration Failed",
+          description: invalidKey ? "The access key you entered is incorrect." : error.message,
+          variant: "destructive",
+        })
+        return
+      }
 
       setCurrentUser(newUser)
-      setIsAuthenticated(true)
       onAuthenticated(newUser)
-
-      toast({
-        title: "Account Created!",
-        description: `Welcome to the grocery tracker, ${newUser.name}!`,
-      })
-    } catch (error) {
-      toast({
-        title: "Registration Failed",
-        description: "An error occurred while creating your account. Please try again.",
-        variant: "destructive",
-      })
+      setAccessKey("")
+      toast({ title: "Account Created!", description: `Welcome to the grocery tracker, ${newUser.name}!` })
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false)
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem("grocery-tracker-user")
-    localStorage.removeItem("grocery-tracker-key")
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setSession(null)
     setCurrentUser(null)
-    setIsAuthenticated(false)
-    setAccessKey("")
     setUserName("")
-    setLoginKey("")
-    setSelectedUserId("")
-
-    toast({
-      title: "Logged Out",
-      description: "You have been logged out successfully.",
-    })
+    setAccessKey("")
+    toast({ title: "Logged Out", description: "You have been logged out successfully." })
   }
 
-  // Show loading spinner while checking session
-  if (isLoading && !isAuthenticated) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="flex items-center gap-2">
@@ -221,11 +191,9 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
     )
   }
 
-  // Show main app if authenticated
-  if (isAuthenticated && currentUser) {
+  if (session && currentUser) {
     return (
       <div className="relative">
-        {/* Logout button in top corner */}
         <div className="absolute top-4 right-4 z-50">
           <Button variant="outline" size="sm" onClick={handleLogout} className="bg-background/80 backdrop-blur-sm">
             Logout
@@ -236,11 +204,9 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
     )
   }
 
-  // Show authentication form
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Package className="h-8 w-8 text-primary" />
@@ -252,113 +218,63 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Authentication Required
+              {session ? <UserPlus className="h-5 w-5" /> : <Shield className="h-5 w-5" />}
+              {session ? "Join the Tracker" : "Sign In"}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login" className="flex items-center gap-2">
-                  <LogIn className="h-4 w-4" />
-                  Login
-                </TabsTrigger>
-                <TabsTrigger value="register" className="flex items-center gap-2">
-                  <UserPlus className="h-4 w-4" />
-                  Join
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="login" className="space-y-4 mt-6">
-                <Alert>
-                  <Key className="h-4 w-4" />
-                  <AlertDescription>Select your user account and enter your access key to login.</AlertDescription>
-                </Alert>
-
-                <div className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="user-select">Select Your Account</Label>
-                    <select
-                      id="user-select"
-                      value={selectedUserId}
-                      onChange={(e) => setSelectedUserId(e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="">Choose your account...</option>
-                      {users.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="login-key">Access Key</Label>
-                    <Input
-                      id="login-key"
-                      type="password"
-                      value={loginKey}
-                      onChange={(e) => setLoginKey(e.target.value)}
-                      placeholder="Enter your access key"
-                      className="font-mono"
-                    />
-                  </div>
-
-                  <Button
-                    onClick={handleLogin}
-                    className="w-full"
-                    disabled={isLoading || !selectedUserId || !loginKey.trim()}
-                  >
-                    {isLoading ? "Logging in..." : "Login"}
-                  </Button>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="register" className="space-y-4 mt-6">
+          <CardContent className="space-y-4">
+            {!session ? (
+              <Button onClick={handleGoogleLogin} className="w-full gap-2" variant="outline" disabled={isSubmitting}>
+                <GoogleIcon />
+                {isSubmitting ? "Redirecting..." : "Continue with Google"}
+              </Button>
+            ) : (
+              <>
                 <Alert>
                   <UserPlus className="h-4 w-4" />
                   <AlertDescription>
-                    Create a new account with a valid access key from an existing member.
+                    Signed in as <strong>{session.user.email}</strong>. Enter the access key from an existing member
+                    to join.
                   </AlertDescription>
                 </Alert>
 
-                <div className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="new-user-name">Your Name</Label>
-                    <Input
-                      id="new-user-name"
-                      value={userName}
-                      onChange={(e) => setUserName(e.target.value)}
-                      placeholder="Enter your name"
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="access-key">Access Key</Label>
-                    <Input
-                      id="access-key"
-                      type="password"
-                      value={accessKey}
-                      onChange={(e) => setAccessKey(e.target.value)}
-                      placeholder="Enter the access key"
-                      className="font-mono"
-                    />
-                  </div>
-
-                  <Button
-                    onClick={handleCreateUser}
-                    className="w-full"
-                    disabled={isLoading || !userName.trim() || !accessKey.trim()}
-                  >
-                    {isLoading ? "Creating Account..." : "Create Account"}
-                  </Button>
+                <div className="grid gap-2">
+                  <Label htmlFor="new-user-name">Your Name</Label>
+                  <Input
+                    id="new-user-name"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    placeholder="Enter your name"
+                  />
                 </div>
-              </TabsContent>
-            </Tabs>
 
-            {/* Help text */}
-            <div className="mt-6 pt-4 border-t text-center">
+                <div className="grid gap-2">
+                  <Label htmlFor="access-key">Access Key</Label>
+                  <Input
+                    id="access-key"
+                    type="password"
+                    value={accessKey}
+                    onChange={(e) => setAccessKey(e.target.value)}
+                    placeholder="Enter the access key"
+                    className="font-mono"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleJoin}
+                  className="w-full"
+                  disabled={isSubmitting || !userName.trim() || !accessKey.trim()}
+                >
+                  {isSubmitting ? "Creating Account..." : "Join"}
+                </Button>
+
+                <Button onClick={handleLogout} variant="ghost" className="w-full" disabled={isSubmitting}>
+                  Use a different Google account
+                </Button>
+              </>
+            )}
+
+            <div className="pt-4 border-t text-center">
               <p className="text-xs text-muted-foreground">
                 Need an access key? Ask an existing member to share theirs with you.
               </p>

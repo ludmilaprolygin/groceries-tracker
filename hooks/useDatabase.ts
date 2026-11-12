@@ -25,7 +25,8 @@ export interface User {
   id: string
   name: string
   color: string
-  access_key: string
+  auth_id: string | null
+  email: string | null
 }
 
 export interface Category {
@@ -479,15 +480,14 @@ export function useDatabase() {
   }, [])
 
   // Access key operations - wrapped in useCallback
-  const validateAccessKey = useCallback(async (key: string) => {
-    try {
-      const { data, error } = await supabase.from("access_keys").select("*").eq("key_value", key).single()
-
-      if (error) throw error
-      return !!data
-    } catch (error) {
-      return false
-    }
+  const fetchLatestAccessKey = useCallback(async () => {
+    const { data } = await supabase
+      .from("access_keys")
+      .select("key_value")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    return data?.key_value ?? ""
   }, [])
 
   const generateAccessKey = useCallback(async () => {
@@ -553,8 +553,8 @@ export function useDatabase() {
     deleteShoppingItem,
 
     // Access key operations
-    validateAccessKey,
     generateAccessKey,
+    fetchLatestAccessKey,
 
     // Refresh functions
     fetchUsers,
