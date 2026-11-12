@@ -18,8 +18,7 @@ const formatPrice = (value: number) =>
 
 const SOURCE_LABEL: Record<MatchResult["source"], string | null> = {
   memory: "Elegido antes",
-  ai: "Sugerido por IA",
-  search: "Primer resultado",
+  match: "Sugerido",
   none: null,
 }
 
@@ -168,7 +167,7 @@ function MatchRow({ result, value, onChange }: { result: MatchResult; value: str
         </span>
         {label && (
           <span className="ml-auto flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-            {result.source === "ai" && <Sparkles className="h-3 w-3" />}
+            {result.source === "match" && <Sparkles className="h-3 w-3" />}
             {label}
           </span>
         )}

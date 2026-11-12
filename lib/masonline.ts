@@ -22,8 +22,8 @@ export interface MatchResult {
   quantity: number
   candidates: StoreProduct[]
   selectedSku: string | null
-  /** memory: chosen before by the household · ai: picked by Claude · search: first result (AI unavailable) */
-  source: "memory" | "ai" | "search" | "none"
+  /** memory: chosen before by the household · match: best rule-based match · none: nothing suitable */
+  source: "memory" | "match" | "none"
 }
 
 /** Normalized shopping-list name used as the key for remembered choices ("Leche  Entera" → "leche entera"). */
@@ -80,11 +80,42 @@ async function getJson(url: string) {
   return res.json()
 }
 
-/** Available products matching a free-text query, in MasOnline's relevance order. */
-export async function searchProducts(query: string, count = 8): Promise<StoreProduct[]> {
-  const params = new URLSearchParams({ query, count: String(count), locale: "es-AR", hideUnavailableItems: "true" })
+async function intelligentSearch(query: string, count: number, operator: "and" | "or"): Promise<StoreProduct[]> {
+  const params = new URLSearchParams({ query, count: String(count), operator, locale: "es-AR", hideUnavailableItems: "true" })
   const data = await getJson(`${BASE_URL}/api/io/_v/api/intelligent-search/product_search/?${params}`)
-  return toProducts(data.products).slice(0, count)
+  return toProducts(data.products)
+}
+
+/** "huevos blancos" → "huevo blanco": MasOnline returns nothing for some plurals. */
+const singularize = (query: string) =>
+  query
+    .split(/\s+/)
+    .map((w) => (w.length > 3 && /[aeiou]s$/i.test(w) ? w.slice(0, -1) : w))
+    .join(" ")
+
+/**
+ * Available products for a free-text query, in MasOnline's relevance order.
+ * Its search is strict (every word must match, some plurals return nothing), so when it finds
+ * little it retries in singular and then with any of the words, leaving the ranking to the caller.
+ */
+export async function searchProducts(query: string, count = 8): Promise<StoreProduct[]> {
+  const MIN_RESULTS = 3
+  const attempts: [string, "and" | "or"][] = [
+    [query, "and"],
+    [singularize(query), "and"],
+    [query, "or"],
+  ]
+  const results: StoreProduct[] = []
+  const tried = new Set<string>()
+  for (const [q, operator] of attempts) {
+    if (tried.has(`${q}|${operator}`)) continue
+    tried.add(`${q}|${operator}`)
+    for (const product of await intelligentSearch(q, count, operator)) {
+      if (!results.some((p) => p.sku === product.sku)) results.push(product)
+    }
+    if (results.length >= MIN_RESULTS) break
+  }
+  return results.slice(0, count)
 }
 
 /** A single SKU, or null if it no longer exists or is out of stock. */
