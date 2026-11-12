@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ShoppingCart, CheckCircle2, Circle } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Users, Key, Copy, UserPlus, UserMinus, Settings, Loader2 } from "lucide-react"
+import { Users, Key, Copy, UserMinus, Settings, Loader2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "@/hooks/use-toast"
 import { useDatabase, type User, type GroceryItem } from "@/hooks/useDatabase"
@@ -30,8 +30,6 @@ function GroceryTracker() {
     items,
     shoppingList,
     loading,
-    createUser,
-    updateUser,
     deleteUser,
     createCategory,
     updateCategory,
@@ -42,18 +40,16 @@ function GroceryTracker() {
     createShoppingItem,
     updateShoppingItem,
     deleteShoppingItem,
-    validateAccessKey,
     generateAccessKey,
+    fetchLatestAccessKey,
+    fetchUsers,
+    fetchCategories,
+    fetchGroceryItems,
+    fetchShoppingList,
   } = useDatabase()
 
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [accessKey, setAccessKey] = useState<string>(
-    process.env.ACCESS_KEY || "",
-  )
-  const [isUserManagementOpen, setIsUserManagementOpen] = useState(false)
-  const [newUserName, setNewUserName] = useState("")
-  const [joinKey, setJoinKey] = useState("")
-  const [showKeyInput, setShowKeyInput] = useState(false)
+  const [accessKey, setAccessKey] = useState<string>("")
 
   const [searchTerm, setSearchTerm] = useState("")
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
@@ -73,9 +69,18 @@ function GroceryTracker() {
   const [isMobile, setIsMobile] = useState(false)
 
   // Handle authentication
-  const handleAuthenticated = useCallback((user: User) => {
-    setCurrentUser(user)
-  }, [])
+  // RLS only returns data to members, so reload everything once the user is authenticated
+  const handleAuthenticated = useCallback(
+    (user: User) => {
+      setCurrentUser(user)
+      fetchUsers()
+      fetchCategories()
+      fetchGroceryItems()
+      fetchShoppingList()
+      fetchLatestAccessKey().then(setAccessKey)
+    },
+    [fetchUsers, fetchCategories, fetchGroceryItems, fetchShoppingList, fetchLatestAccessKey],
+  )
 
   // Debounce search term
   useEffect(() => {
@@ -362,29 +367,6 @@ function GroceryTracker() {
     }
   }, [accessKey])
 
-  const addNewUser = useCallback(async () => {
-    if (newUserName.trim()) {
-      const colors = [
-        "bg-red-500",
-        "bg-green-500",
-        "bg-blue-500",
-        "bg-yellow-500",
-        "bg-purple-500",
-        "bg-pink-500",
-        "bg-indigo-500",
-        "bg-orange-500",
-      ]
-
-      await createUser({
-        name: newUserName.trim(),
-        color: colors[users.length % colors.length],
-        access_key: accessKey,
-      })
-
-      setNewUserName("")
-    }
-  }, [newUserName, users.length, accessKey, createUser])
-
   const removeUser = useCallback(
     async (userId: string) => {
       if (userId === currentUser?.id) {
@@ -400,40 +382,6 @@ function GroceryTracker() {
     },
     [currentUser?.id, deleteUser],
   )
-
-  const joinWithKey = useCallback(async () => {
-    const isValid = await validateAccessKey(joinKey.trim())
-
-    if (isValid) {
-      if (newUserName.trim()) {
-        await addNewUser()
-        setJoinKey("")
-        setShowKeyInput(false)
-      } else {
-        toast({
-          title: "Name Required",
-          description: "Please enter your name to join.",
-          variant: "destructive",
-        })
-      }
-    } else {
-      toast({
-        title: "Invalid Access Key",
-        description: "The access key you entered is incorrect.",
-        variant: "destructive",
-      })
-    }
-  }, [joinKey, newUserName, validateAccessKey, addNewUser])
-
-  const switchUser = useCallback((user: User) => {
-    setCurrentUser(user)
-    // Update localStorage
-    localStorage.setItem("grocery-tracker-user", JSON.stringify(user))
-    toast({
-      title: "User Switched",
-      description: `Now using the tracker as ${user.name}.`,
-    })
-  }, [])
 
   if (loading) {
     return (
@@ -936,20 +884,7 @@ function GroceryTracker() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {users.map((user) => (
-                        <Button
-                          key={user.id}
-                          variant={currentUser.id === user.id ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => switchUser(user)}
-                          className="flex items-center gap-2 min-h-[44px] md:min-h-auto"
-                        >
-                          <div className={`w-3 h-3 rounded-full ${user.color}`} />
-                          {user.name}
-                        </Button>
-                      ))}
-                    </div>
+                    <div className="text-sm text-muted-foreground">{currentUser.email}</div>
                   </CardContent>
                 </Card>
               )}
@@ -995,83 +930,6 @@ function GroceryTracker() {
                 </CardContent>
               </Card>
 
-              {/* Add New User - Mobile Optimized */}
-              <Card>
-                <CardHeader className="pb-3 md:pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                    <UserPlus className="h-4 w-4 md:h-5 md:w-5" />
-                    Add New User
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {!showKeyInput ? (
-                    <Button onClick={() => setShowKeyInput(true)} className="w-full min-h-[48px]">
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Join with Access Key
-                    </Button>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="grid gap-2">
-                        <Label htmlFor="user-name">Your Name</Label>
-                        <Input
-                          id="user-name"
-                          value={newUserName}
-                          onChange={(e) => setNewUserName(e.target.value)}
-                          placeholder="Enter your name"
-                          className="text-base" // Prevent zoom on iOS
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="access-key">Access Key</Label>
-                        <Input
-                          id="access-key"
-                          value={joinKey}
-                          onChange={(e) => setJoinKey(e.target.value)}
-                          placeholder="Enter the access key"
-                          className="font-mono text-base" // Prevent zoom on iOS
-                        />
-                      </div>
-                      <div className="flex flex-col gap-2 md:flex-row">
-                        <Button onClick={joinWithKey} className="flex-1 min-h-[48px]">
-                          Join Tracker
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            setShowKeyInput(false)
-                            setJoinKey("")
-                            setNewUserName("")
-                          }}
-                          variant="outline"
-                          className="flex-1 min-h-[48px]"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Quick Add */}
-                  <div className="border-t pt-4">
-                    <div className="text-sm text-muted-foreground mb-2">Quick add user (you have the key):</div>
-                    <div className="flex flex-col gap-2 md:flex-row">
-                      <Input
-                        value={newUserName}
-                        onChange={(e) => setNewUserName(e.target.value)}
-                        placeholder="User name"
-                        className="text-base flex-1" // Prevent zoom on iOS
-                      />
-                      <Button
-                        onClick={addNewUser}
-                        disabled={!newUserName.trim()}
-                        className="min-h-[44px] md:min-h-auto"
-                      >
-                        Add
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Manage Users - Mobile Optimized */}
               <Card>
                 <CardHeader className="pb-3 md:pb-4">
@@ -1096,7 +954,7 @@ function GroceryTracker() {
                           <div className="min-w-0 flex-1">
                             <div className="font-medium text-sm md:text-base truncate">{user.name}</div>
                             <div className="text-xs md:text-sm text-muted-foreground">
-                              {user.id === currentUser?.id ? "Current User" : "Member"}
+                              {user.id === currentUser?.id ? "Current User" : user.email || "Member"}
                             </div>
                           </div>
                         </div>

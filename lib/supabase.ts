@@ -1,9 +1,16 @@
 import { createClient } from "@supabase/supabase-js"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    flowType: "pkce",
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+})
 
 export type Database = {
   public: {
@@ -13,21 +20,24 @@ export type Database = {
           id: string
           name: string
           color: string
-          access_key: string
+          auth_id: string | null
+          email: string | null
           created_at: string
         }
         Insert: {
           id?: string
           name: string
           color: string
-          access_key: string
+          auth_id?: string | null
+          email?: string | null
           created_at?: string
         }
         Update: {
           id?: string
           name?: string
           color?: string
-          access_key?: string
+          auth_id?: string | null
+          email?: string | null
           created_at?: string
         }
       }
