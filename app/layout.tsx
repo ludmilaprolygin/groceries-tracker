@@ -2,11 +2,26 @@ import type { Metadata, Viewport } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Toaster } from '@/components/ui/toaster'
+import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister'
 import './globals.css'
 
 export const metadata: Metadata = {
   title: { default: 'Grocery Tracker', template: '%s · Grocery Tracker' },
   description: 'Controlá el stock de tu casa y tu lista de compras',
+  applicationName: 'Grocery Tracker',
+  appleWebApp: {
+    capable: true,
+    title: 'Grocery',
+    statusBarStyle: 'default',
+  },
+  formatDetection: { telephone: false },
+  icons: {
+    icon: [
+      { url: '/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: { url: '/icons/apple-touch-icon.png', sizes: '180x180' },
+  },
 }
 
 export const viewport: Viewport = {
@@ -26,6 +41,7 @@ export default function RootLayout({
       <body>
         {children}
         <Toaster />
+        <ServiceWorkerRegister />
       </body>
     </html>
   )
