@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { LAVADERO_LAYOUT, getLocationsForArea, type GridLocation, type LocationType } from "@/lib/locations"
+import { AREA_LAYOUTS, getLocationsForArea, type GridArea, type GridLocation, type LocationType } from "@/lib/locations"
 import { cn } from "@/lib/utils"
 
 interface LocationGridProps {
@@ -11,7 +11,7 @@ interface LocationGridProps {
   onLocationDeselect: (locationId: string) => void
   showQuantities?: boolean
   locationQuantities?: Record<string, number>
-  locationType?: "lavadero" | "cocina" | "all"
+  locationType?: GridArea | "all"
 }
 
 const TYPE_ICONS: Record<LocationType, string> = {
@@ -20,9 +20,16 @@ const TYPE_ICONS: Record<LocationType, string> = {
   shelf1: "🗄️",
   shelf2: "🗄️",
   appliance: "🫧",
+  freezer: "❄️",
+  fridge: "🥛",
 }
 
-const TITLES = { lavadero: "Lavadero", cocina: "Cocina", all: "Ubicaciones" }
+const TITLES: Record<GridArea | "all", string> = {
+  lavadero: "Lavadero",
+  cocina: "Cocina",
+  heladera: "Heladera",
+  all: "Ubicaciones",
+}
 
 const CELL_SIZE = "h-16 w-[5.25rem] md:h-20 md:w-28"
 
@@ -36,6 +43,7 @@ export function LocationGrid({
   locationType = "all",
 }: LocationGridProps) {
   const locations = getLocationsForArea(locationType)
+  const layout = locationType === "all" ? undefined : AREA_LAYOUTS[locationType]
 
   const gridRows = locationType === "cocina" ? 2 : 6
   const gridCols = locationType === "cocina" ? 2 : 3
@@ -87,12 +95,12 @@ export function LocationGrid({
       </div>
 
       <div className="flex justify-center">
-        {locationType === "lavadero" ? (
+        {layout ? (
           <div
-            className="grid h-[26rem] w-full max-w-sm overflow-hidden rounded-xl border-2 border-border bg-muted/40 md:h-[30rem]"
-            style={{ gridTemplateColumns: LAVADERO_LAYOUT.columns, gridTemplateRows: LAVADERO_LAYOUT.rows }}
+            className={cn("grid overflow-hidden rounded-xl border-2 border-border bg-muted/40", layout.frameClassName)}
+            style={{ gridTemplateColumns: layout.columns, gridTemplateRows: layout.rows }}
           >
-            {LAVADERO_LAYOUT.blocks.map((block) => (
+            {layout.blocks.map((block) => (
               <div
                 key={block.area}
                 style={{ gridArea: block.area }}

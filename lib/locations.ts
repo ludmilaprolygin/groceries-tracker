@@ -1,4 +1,4 @@
-export type LocationType = "cabinet" | "tool" | "shelf1" | "shelf2" | "appliance"
+export type LocationType = "cabinet" | "tool" | "shelf1" | "shelf2" | "appliance" | "freezer" | "fridge"
 
 export interface GridLocation {
   id: string
@@ -9,13 +9,20 @@ export interface GridLocation {
 }
 
 /** Storage areas the user can pick from when adding an item. */
-export type StorageArea = "lavadero" | "cocina" | "otros"
+export type StorageArea = "lavadero" | "cocina" | "heladera" | "otros"
+
+/** Areas with a predefined map of locations (everything except "otros"). */
+export type GridArea = Exclude<StorageArea, "otros">
 
 export const STORAGE_AREAS: { id: StorageArea; label: string; icon: string }[] = [
   { id: "lavadero", label: "Lavadero", icon: "🧺" },
   { id: "cocina", label: "Cocina", icon: "🍳" },
+  { id: "heladera", label: "Heladera", icon: "🧊" },
   { id: "otros", label: "Otros", icon: "📦" },
 ]
+
+/** Quick suggestions offered in the "otros" area. */
+export const OTROS_PRESETS = ["Mesada"]
 
 export const LAVADERO_LOCATIONS: GridLocation[] = [
   // Parte superior (2x2) en la primera fila
@@ -58,7 +65,16 @@ export interface LayoutBlock {
  * two cabinets across the top, then an empty space, the shelf unit
  * and the big shelf above the washing machine.
  */
-export const LAVADERO_LAYOUT: { columns: string; rows: string; blocks: LayoutBlock[] } = {
+export interface AreaLayout {
+  /** Tailwind size classes for the outer frame. */
+  frameClassName: string
+  columns: string
+  rows: string
+  blocks: LayoutBlock[]
+}
+
+export const LAVADERO_LAYOUT: AreaLayout = {
+  frameClassName: "h-[26rem] w-full max-w-sm md:h-[30rem]",
   columns: "19fr 17fr 35fr",
   rows: "5fr 10fr",
   blocks: [
@@ -109,10 +125,38 @@ export const COCINA_LOCATIONS: GridLocation[] = [
   { id: "cocina-4", name: "Cocina 4", row: 1, col: 1, type: "cabinet" },
 ]
 
-export const ALL_LOCATIONS: GridLocation[] = [...LAVADERO_LOCATIONS, ...COCINA_LOCATIONS]
+export const HELADERA_LOCATIONS: GridLocation[] = [
+  { id: "heladera", name: "Heladera", row: 0, col: 0, type: "fridge" },
+  { id: "freezer", name: "Freezer", row: 1, col: 0, type: "freezer" },
+]
 
-export function getLocationsForArea(area: "lavadero" | "cocina" | "all"): GridLocation[] {
+/** Visual layout of the fridge: the fridge compartment on top, the freezer below. */
+export const HELADERA_LAYOUT: AreaLayout = {
+  frameClassName: "h-[26rem] w-full max-w-[10rem] md:h-[30rem] md:max-w-[11rem]",
+  columns: "1fr",
+  rows: "1fr",
+  blocks: [
+    {
+      area: "1 / 1 / 2 / 2",
+      sections: [
+        { id: "heladera", size: 2 },
+        { id: "freezer", size: 1 },
+      ],
+    },
+  ],
+}
+
+/** Areas drawn as a furniture map; the rest use a simple grid. */
+export const AREA_LAYOUTS: Partial<Record<GridArea, AreaLayout>> = {
+  lavadero: LAVADERO_LAYOUT,
+  heladera: HELADERA_LAYOUT,
+}
+
+export const ALL_LOCATIONS: GridLocation[] = [...LAVADERO_LOCATIONS, ...COCINA_LOCATIONS, ...HELADERA_LOCATIONS]
+
+export function getLocationsForArea(area: GridArea | "all"): GridLocation[] {
   if (area === "lavadero") return LAVADERO_LOCATIONS
   if (area === "cocina") return COCINA_LOCATIONS
+  if (area === "heladera") return HELADERA_LOCATIONS
   return ALL_LOCATIONS
 }
