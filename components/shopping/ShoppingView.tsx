@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { ShoppingBasket } from "lucide-react"
 import { useData } from "@/components/providers/DataProvider"
 import { EmptyState } from "@/components/shared/EmptyState"
@@ -25,23 +26,33 @@ export function ShoppingView() {
 
   const deleteItem = (item: ShoppingItem) => deleteShoppingItem(item.id)
 
+  const [addingLowStock, setAddingLowStock] = useState(false)
+
   const addLowStockToList = async () => {
+    if (addingLowStock) return
     const missing = lowStockItems.filter(
       (stockItem) =>
         !shoppingList.some(
           (shopItem) => shopItem.groceryItemId === stockItem.id || findStockItemByName([stockItem], shopItem.name),
         ),
     )
-    for (const item of missing) {
-      await createShoppingItem({
-        name: item.name,
-        quantity: 1,
-        location: item.storageLocations[0]?.location || "Unknown",
-        isCompleted: false,
-        addedDate: today(),
-        categoryId: item.category?.id ?? null,
-        groceryItemId: item.id,
-      })
+    setAddingLowStock(true)
+    try {
+      for (const item of missing) {
+        await createShoppingItem({
+          name: item.name,
+          quantity: 1,
+          location: item.storageLocations[0]?.location || "Unknown",
+          isCompleted: false,
+          addedDate: today(),
+          categoryId: item.category?.id ?? null,
+          groceryItemId: item.id,
+        })
+      }
+    } catch {
+      // The failed insert is already reported with a toast; stop there instead of crashing the page
+    } finally {
+      setAddingLowStock(false)
     }
   }
 
@@ -72,7 +83,7 @@ export function ShoppingView() {
 
       {shoppingList.length > 0 && <ShoppingProgress value={progress} />}
 
-      {lowStockItems.length > 0 && <LowStockBanner count={lowStockItems.length} onAddAll={addLowStockToList} />}
+      {lowStockItems.length > 0 && <LowStockBanner count={lowStockItems.length} onAddAll={addLowStockToList} busy={addingLowStock} />}
 
       {pending.length > 0 && <MasOnlineCartDialog items={pending} />}
 
