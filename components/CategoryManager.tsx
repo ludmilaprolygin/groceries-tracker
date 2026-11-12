@@ -3,11 +3,10 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Edit2, Trash2, Tag } from "lucide-react"
+import { Plus, Pencil, Trash2, Tag, Check } from "lucide-react"
+import { Dot, EmptyState, FieldLabel, NEUTRAL_SWATCHES, SectionHeader } from "@/components/Primitives"
+import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 import type { Category } from "@/hooks/useDatabase"
 
@@ -18,20 +17,7 @@ interface CategoryManagerProps {
   onDeleteCategory: (id: string) => Promise<void>
 }
 
-const CATEGORY_COLORS = [
-  "bg-red-500",
-  "bg-blue-500",
-  "bg-green-500",
-  "bg-yellow-500",
-  "bg-purple-500",
-  "bg-pink-500",
-  "bg-indigo-500",
-  "bg-orange-500",
-  "bg-teal-500",
-  "bg-cyan-500",
-  "bg-emerald-500",
-  "bg-amber-500",
-]
+const CATEGORY_COLORS = NEUTRAL_SWATCHES
 
 const CATEGORY_ICONS = [
   "🥛",
@@ -78,14 +64,14 @@ export function CategoryManager({
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [formData, setFormData] = useState({
     name: "",
-    color: "bg-gray-500",
+    color: "bg-stone-400",
     icon: "📦",
   })
 
   const resetForm = () => {
     setFormData({
       name: "",
-      color: "bg-gray-500",
+      color: "bg-stone-400",
       icon: "📦",
     })
     setEditingCategory(null)
@@ -154,13 +140,12 @@ export function CategoryManager({
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3 md:pb-4">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-            <Tag className="h-4 w-4 md:h-5 md:w-5" />
-            Categories
-          </CardTitle>
+    <div className="space-y-6">
+      <SectionHeader
+        eyebrow="Organise"
+        title="Categories"
+        description={`${categories.length} ${categories.length === 1 ? "category" : "categories"}`}
+        action={
           <Dialog
             open={isCreateDialogOpen}
             onOpenChange={(open) => {
@@ -169,55 +154,75 @@ export function CategoryManager({
             }}
           >
             <DialogTrigger asChild>
-              <Button size="sm" className="min-h-[44px] md:min-h-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Category
+              <Button className="h-10">
+                <Plus />
+                <span className="hidden sm:inline">New category</span>
+                <span className="sm:hidden">New</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>{editingCategory ? "Edit Category" : "Create New Category"}</DialogTitle>
+                <DialogTitle>{editingCategory ? "Edit category" : "New category"}</DialogTitle>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="category-name">Category Name</Label>
-                  <Input
-                    id="category-name"
-                    value={formData.name}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder="e.g., Dairy, Meat, Fruits"
-                    className="text-base"
-                    autoFocus
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label>Color</Label>
-                  <div className="grid grid-cols-6 gap-2">
-                    {CATEGORY_COLORS.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        onClick={() => setFormData((prev) => ({ ...prev, color }))}
-                        className={`w-8 h-8 rounded-full ${color} border-2 ${
-                          formData.color === color ? "border-foreground" : "border-transparent"
-                        } hover:scale-110 transition-transform`}
-                      />
-                    ))}
+              <div className="grid gap-6 pt-2">
+                {/* Preview */}
+                <div className="flex items-center gap-3 rounded-2xl bg-muted/60 p-4">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-card text-xl ring-1 ring-border">
+                    {formData.icon}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{formData.name || "Category name"}</p>
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Dot color={formData.color} /> Preview
+                    </p>
                   </div>
                 </div>
 
                 <div className="grid gap-2">
-                  <Label>Icon</Label>
-                  <div className="grid grid-cols-8 gap-2 max-h-32 overflow-y-auto">
+                  <FieldLabel htmlFor="category-name">Name</FieldLabel>
+                  <Input
+                    id="category-name"
+                    value={formData.name}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g. Dairy, Produce, Cleaning"
+                    className="h-11 text-base"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="grid gap-2.5">
+                  <FieldLabel>Colour</FieldLabel>
+                  <div className="flex flex-wrap gap-2.5">
+                    {CATEGORY_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        aria-label={color}
+                        onClick={() => setFormData((prev) => ({ ...prev, color }))}
+                        className={cn(
+                          "flex h-8 w-8 items-center justify-center rounded-full ring-offset-2 ring-offset-background transition-all",
+                          color,
+                          formData.color === color ? "ring-2 ring-foreground" : "hover:scale-110",
+                        )}
+                      >
+                        {formData.color === color && <Check className="h-3.5 w-3.5 text-white" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid gap-2.5">
+                  <FieldLabel>Icon</FieldLabel>
+                  <div className="grid max-h-40 grid-cols-8 gap-1.5 overflow-y-auto rounded-2xl border bg-card p-2">
                     {CATEGORY_ICONS.map((icon) => (
                       <button
                         key={icon}
                         type="button"
                         onClick={() => setFormData((prev) => ({ ...prev, icon }))}
-                        className={`w-8 h-8 text-lg flex items-center justify-center rounded border-2 ${
-                          formData.icon === icon ? "border-foreground bg-muted" : "border-transparent hover:bg-muted"
-                        } transition-colors`}
+                        className={cn(
+                          "flex aspect-square items-center justify-center rounded-xl text-lg transition-colors",
+                          formData.icon === icon ? "bg-secondary ring-1 ring-foreground/40" : "hover:bg-accent",
+                        )}
                       >
                         {icon}
                       </button>
@@ -225,56 +230,67 @@ export function CategoryManager({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/20">
-                  <span className="text-lg">{formData.icon}</span>
-                  <Badge className={`${formData.color} text-white`}>{formData.name || "Category Name"}</Badge>
-                </div>
-
                 <Button
                   onClick={editingCategory ? handleEdit : handleCreate}
-                  className="w-full min-h-[48px]"
+                  className="h-12 w-full text-[15px]"
                   disabled={!formData.name.trim()}
                 >
-                  {editingCategory ? "Update Category" : "Create Category"}
+                  {editingCategory ? "Save changes" : "Create category"}
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
+        }
+      />
+
+      {categories.length === 0 ? (
+        <div className="rounded-2xl border border-dashed bg-card/50">
+          <EmptyState
+            icon={<Tag className="h-5 w-5" />}
+            title="No categories yet"
+            description="Create categories to group and filter your items."
+          />
         </div>
-      </CardHeader>
-      <CardContent className="p-2 md:p-6">
-        {categories.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground text-sm md:text-base">
-            No categories yet. Create your first category to organize your items!
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {categories.map((category) => (
-              <div key={category.id} className="flex items-center justify-between p-3 border rounded-lg min-h-[60px]">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <span className="text-lg flex-shrink-0">{category.icon}</span>
-                  <div className="min-w-0 flex-1">
-                    <Badge className={`${category.color} text-white text-xs`}>{category.name}</Badge>
-                  </div>
-                </div>
-                <div className="flex gap-1 flex-shrink-0">
-                  <Button variant="outline" size="sm" onClick={() => openEditDialog(category)} className="h-8 w-8 p-0">
-                    <Edit2 className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(category.id)}
-                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {categories.map((category) => (
+            <div
+              key={category.id}
+              className="group flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-3 pr-2 transition-shadow hover:shadow-sm"
+            >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted text-xl">
+                {category.icon}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium">{category.name}</p>
+                <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Dot color={category.color} /> Category
+                </p>
               </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              <div className="flex shrink-0 gap-0.5">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => openEditDialog(category)}
+                  className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                  aria-label={`Edit ${category.name}`}
+                >
+                  <Pencil className="!size-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(category.id)}
+                  className="h-9 w-9 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  aria-label={`Delete ${category.name}`}
+                >
+                  <Trash2 className="!size-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

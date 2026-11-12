@@ -3,25 +3,88 @@
 import type React from "react"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { Plus, Search, Edit2, Trash2, Package, ChevronDown, ChevronRight, MapPin, Filter } from "lucide-react"
+import {
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  Package,
+  ChevronDown,
+  MapPin,
+  Tag,
+  ShoppingBasket,
+  Users,
+  Copy,
+  RefreshCw,
+  UserMinus,
+  Loader2,
+  Check,
+  LogOut,
+  Settings2,
+  X,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ShoppingCart, CheckCircle2, Circle } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Users, Key, Copy, UserMinus, Settings, Loader2 } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { toast } from "@/hooks/use-toast"
 import { useDatabase, type User, type GroceryItem } from "@/hooks/useDatabase"
 import { KITCHEN_LOCATIONS } from "@/components/LocationGrid"
 import { QuantityAdjuster } from "@/components/QuantityAdjuster"
-import { AuthGuard } from "@/components/AuthGuard"
+import { AuthGuard, useAuth } from "@/components/AuthGuard"
 import { FormDialogContent } from "@/components/FormDialogContent"
 import { CategoryManager } from "@/components/CategoryManager"
+import { BrandMark } from "@/components/BrandMark"
+import { Avatar, Chip, Dot, EmptyState, FieldLabel, SectionHeader, Stat } from "@/components/Primitives"
+import { cn } from "@/lib/utils"
+
+const NAV_ITEMS = [
+  { value: "stock", label: "Pantry", icon: Package },
+  { value: "shopping", label: "List", icon: ShoppingBasket },
+  { value: "categories", label: "Categories", icon: Tag },
+  { value: "users", label: "Household", icon: Users },
+] as const
+
+const LOW_STOCK_THRESHOLD = 3
+
+function UserMenu({ user, onOpenSettings }: { user: User; onOpenSettings: () => void }) {
+  const { logout } = useAuth()
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="flex items-center gap-2 rounded-full p-0.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 md:pl-3"
+          aria-label="Account menu"
+        >
+          <span className="hidden max-w-[10rem] truncate text-sm font-medium lg:inline">{user.name}</span>
+          <Avatar name={user.name} color={user.color} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60 rounded-2xl p-1.5">
+        <DropdownMenuLabel className="px-2.5 py-2 font-normal">
+          <p className="truncate text-sm font-medium">{user.name}</p>
+          {user.email && <p className="truncate text-xs text-muted-foreground">{user.email}</p>}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="rounded-xl px-2.5 py-2" onSelect={onOpenSettings}>
+          <Settings2 className="mr-2 h-4 w-4" /> Household settings
+        </DropdownMenuItem>
+        <DropdownMenuItem className="rounded-xl px-2.5 py-2 text-destructive focus:text-destructive" onSelect={logout}>
+          <LogOut className="mr-2 h-4 w-4" /> Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 function GroceryTracker() {
   const {
@@ -66,7 +129,6 @@ function GroceryTracker() {
   })
   const [activeTab, setActiveTab] = useState("stock")
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
-  const [isMobile, setIsMobile] = useState(false)
 
   // Handle authentication
   // RLS only returns data to members, so reload everything once the user is authenticated
@@ -99,17 +161,6 @@ function GroceryTracker() {
     }, 0)
   }, [])
 
-  // Detect mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
-
   // Memoize filtered items to prevent recalculation on every render
   const filteredItems = useMemo(
     () =>
@@ -128,12 +179,6 @@ function GroceryTracker() {
   // Memoize utility functions
   const getTotalQuantity = useCallback((item: GroceryItem) => {
     return item.storageLocations.reduce((total, location) => total + location.quantity, 0)
-  }, [])
-
-  const getQuantityBadgeVariant = useCallback((quantity: number) => {
-    if (quantity <= 1) return "destructive"
-    if (quantity <= 3) return "secondary"
-    return "default"
   }, [])
 
   // Wrap form handlers in useCallback
@@ -385,603 +430,523 @@ function GroceryTracker() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="flex items-center gap-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span className="text-sm md:text-base">Loading grocery tracker...</span>
-        </div>
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-3 bg-background p-4">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Loading your pantry…</span>
       </div>
     )
   }
 
+  // Derived values (plain computations: hooks can't run after the early return above)
+  const lowStockCount = items.filter((item) => getTotalQuantity(item) <= LOW_STOCK_THRESHOLD).length
+  const totalQuantity = items.reduce((total, item) => total + getTotalQuantity(item), 0)
+  const pendingShopping = shoppingList.filter((item) => !item.isCompleted)
+  const completedShopping = shoppingList.filter((item) => item.isCompleted)
+  const shoppingProgress = shoppingList.length ? Math.round((completedShopping.length / shoppingList.length) * 100) : 0
+
+  const itemDialog = (mode: "stock" | "shopping") => (
+    <Dialog
+      open={isAddDialogOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          preventScrollToTop()
+        }
+        setIsAddDialogOpen(open)
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button onClick={() => (mode === "stock" ? resetForm() : resetFormForShopping())} className="h-10">
+          <Plus />
+          <span className="hidden sm:inline">{mode === "stock" ? "Add item" : "Add to list"}</span>
+          <span className="sm:hidden">Add</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>
+            {mode === "shopping" ? "Add to shopping list" : editingItem ? "Edit item" : "New item"}
+          </DialogTitle>
+        </DialogHeader>
+        <FormDialogContent
+          formData={formData}
+          setFormData={setFormData}
+          activeTab={activeTab}
+          users={users}
+          categories={categories}
+          editingItem={editingItem}
+          updateStorageLocation={updateStorageLocation}
+          toggleUserSelection={toggleUserSelection}
+          handleAddItem={handleAddItem}
+          handleEditItem={handleEditItem}
+          handleAddToShoppingList={handleAddToShoppingList}
+        />
+      </DialogContent>
+    </Dialog>
+  )
+
+  const renderShoppingRow = (item: (typeof shoppingList)[number]) => (
+    <li key={item.id} className="group flex items-center gap-3 px-3 py-2 md:px-4">
+      <button
+        onClick={() => handleToggleShoppingItem(item.id)}
+        aria-label={item.isCompleted ? `Mark ${item.name} as pending` : `Mark ${item.name} as bought`}
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+      >
+        <span
+          className={cn(
+            "flex h-6 w-6 items-center justify-center rounded-full border-[1.5px] transition-all",
+            item.isCompleted
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-foreground/25 group-hover:border-foreground/50",
+          )}
+        >
+          {item.isCompleted && <Check className="h-3.5 w-3.5" strokeWidth={2.5} />}
+        </span>
+      </button>
+
+      <div className="min-w-0 flex-1">
+        <p
+          className={cn(
+            "truncate text-[15px] transition-colors",
+            item.isCompleted && "text-muted-foreground line-through decoration-foreground/30",
+          )}
+        >
+          {item.name}
+        </p>
+      </div>
+
+      <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+        ×{item.quantity}
+      </span>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => handleDeleteShoppingItem(item.id)}
+        aria-label={`Remove ${item.name}`}
+        className="h-10 w-10 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+      >
+        <X className="!size-4" />
+      </Button>
+    </li>
+  )
+
   return (
     <AuthGuard onAuthenticated={handleAuthenticated}>
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto p-2 md:p-4 max-w-6xl">
-          {/* Mobile Header */}
-          <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-8">
-            <Package className="h-6 w-6 md:h-8 md:w-8 text-primary" />
-            <h1 className="text-xl md:text-3xl font-bold">Grocery Tracker</h1>
-            {currentUser && (
-              <Badge variant="outline" className="ml-auto text-xs">
-                <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full ${currentUser.color} mr-1 md:mr-2`} />
-                <span className="hidden sm:inline">{currentUser.name}</span>
-                <span className="sm:hidden">{currentUser.name.charAt(0)}</span>
-              </Badge>
-            )}
-          </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="min-h-[100dvh] bg-background">
+        {/* Header */}
+        <header className="sticky top-0 z-40 border-b border-border/60">
+          {/* Blur lives on its own layer so the fixed mobile nav below isn't trapped by backdrop-filter */}
+          <div aria-hidden className="absolute inset-0 -z-10 bg-background/80 backdrop-blur-xl" />
+          <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4 md:px-8">
+            <BrandMark compact />
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-4 md:mb-6">
-              <TabsTrigger value="stock" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-                <Package className="h-3 w-3 md:h-4 md:w-4" />
-                <span className="hidden sm:inline">Stock</span>
-                <span className="sm:hidden">📦</span>
-              </TabsTrigger>
-              <TabsTrigger value="categories" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-                <Filter className="h-3 w-3 md:h-4 md:w-4" />
-                <span className="hidden sm:inline">Categories</span>
-                <span className="sm:hidden">🏷️</span>
-              </TabsTrigger>
-              <TabsTrigger value="shopping" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-                <ShoppingCart className="h-3 w-3 md:h-4 md:w-4" />
-                <span className="hidden sm:inline">Shopping</span>
-                <span className="sm:hidden">🛒</span>
-              </TabsTrigger>
-              <TabsTrigger value="users" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-                <Users className="h-3 w-3 md:h-4 md:w-4" />
-                <span className="hidden sm:inline">Users</span>
-                <span className="sm:hidden">👥</span>
-              </TabsTrigger>
+            <TabsList
+              className={cn(
+                // Mobile: bottom navigation bar
+                "fixed inset-x-0 bottom-0 z-40 grid h-auto grid-cols-4 rounded-none border-t border-border/60 bg-background/90 p-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))] backdrop-blur-xl",
+                // Desktop: segmented control in the header
+                "md:static md:inline-flex md:h-10 md:w-auto md:rounded-full md:border md:bg-muted/70 md:p-1 md:backdrop-blur-none",
+              )}
+            >
+              {NAV_ITEMS.map(({ value, label, icon: Icon }) => (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className={cn(
+                    "flex h-auto flex-col gap-1 rounded-xl px-1 py-1.5 text-[10px] font-medium text-muted-foreground",
+                    "data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none",
+                    "md:h-8 md:flex-row md:gap-1.5 md:rounded-full md:px-4 md:py-0 md:text-[13px]",
+                    "md:data-[state=active]:bg-card md:data-[state=active]:shadow-sm",
+                  )}
+                >
+                  <Icon className="h-5 w-5 md:h-3.5 md:w-3.5" strokeWidth={1.75} />
+                  {label}
+                </TabsTrigger>
+              ))}
             </TabsList>
 
-            <TabsContent value="stock" className="space-y-4 md:space-y-6">
-              {/* Stats Cards - Mobile Optimized */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-                <Card>
-                  <CardHeader className="pb-1 md:pb-2">
-                    <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Total Items</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="text-lg md:text-2xl font-bold">{items.length}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-1 md:pb-2">
-                    <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Low Stock</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="text-lg md:text-2xl font-bold text-orange-600">
-                      {items.filter((item) => getTotalQuantity(item) <= 3).length}
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-1 md:pb-2">
-                    <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Categories</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="text-lg md:text-2xl font-bold">{categories.length}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-1 md:pb-2">
-                    <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Total Qty</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="text-lg md:text-2xl font-bold">
-                      {items.reduce((total, item) => total + getTotalQuantity(item), 0)}
-                    </div>
-                  </CardContent>
-                </Card>
+            {currentUser && <UserMenu user={currentUser} onOpenSettings={() => setActiveTab("users")} />}
+          </div>
+        </header>
+
+        <main className="mx-auto max-w-5xl px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-7 md:px-8 md:pb-20 md:pt-12">
+          {/* ───────────── Pantry ───────────── */}
+          <TabsContent value="stock" className="mt-0 space-y-6 md:space-y-8">
+            <SectionHeader
+              eyebrow={new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
+              title="Pantry"
+              action={itemDialog("stock")}
+            />
+
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border/70 bg-border/70 md:grid-cols-4 [&>*]:bg-card">
+              <Stat label="Items" value={items.length} />
+              <Stat label="Running low" value={lowStockCount} tone={lowStockCount > 0 ? "warning" : undefined} />
+              <Stat label="Units" value={totalQuantity} />
+              <Stat label="Categories" value={categories.length} />
+            </div>
+
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name or location"
+                  value={debouncedSearchTerm}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setDebouncedSearchTerm(e.target.value)
+                  }}
+                  className="h-12 rounded-full pl-11 pr-11 text-base md:text-sm" // text-base prevents zoom on iOS
+                />
+                {debouncedSearchTerm && (
+                  <button
+                    onClick={() => setDebouncedSearchTerm("")}
+                    aria-label="Clear search"
+                    className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-accent"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
 
-              {/* Mobile Controls */}
-              <div className="flex flex-col gap-3 md:flex-row md:gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search items..."
-                    value={debouncedSearchTerm}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      setDebouncedSearchTerm(e.target.value)
-                    }}
-                    className="pl-10 text-base" // Prevent zoom on iOS
-                  />
-                </div>
-
-                {/* Category Filter */}
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  <Button
-                    variant={selectedCategoryFilter === null ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedCategoryFilter(null)}
-                    className="flex items-center gap-2 min-h-[44px] md:min-h-auto whitespace-nowrap"
-                  >
-                    <span>📦</span>
+              {categories.length > 0 && (
+                <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 no-scrollbar md:mx-0 md:flex-wrap md:px-0">
+                  <Chip active={selectedCategoryFilter === null} onClick={() => setSelectedCategoryFilter(null)}>
                     All
-                  </Button>
+                  </Chip>
                   {categories.map((category) => (
-                    <Button
+                    <Chip
                       key={category.id}
-                      variant={selectedCategoryFilter === category.id ? "default" : "outline"}
-                      size="sm"
+                      active={selectedCategoryFilter === category.id}
                       onClick={() => setSelectedCategoryFilter(category.id)}
-                      className="flex items-center gap-2 min-h-[44px] md:min-h-auto whitespace-nowrap"
                     >
-                      <span>{category.icon}</span>
+                      <span className="text-base leading-none">{category.icon}</span>
                       {category.name}
-                    </Button>
+                    </Chip>
                   ))}
                 </div>
-
-                <Dialog
-                  open={isAddDialogOpen}
-                  onOpenChange={(open) => {
-                    if (!open) {
-                      preventScrollToTop()
-                    }
-                    setIsAddDialogOpen(open)
-                  }}
-                >
-                  <DialogTrigger asChild>
-                    <Button onClick={() => resetForm()} className="min-h-[44px] md:min-h-auto">
-                      <Plus className="h-4 w-4 mr-2" />
-                      <span className="hidden sm:inline">Add Item</span>
-                      <span className="sm:hidden">Add</span>
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>{editingItem ? "Edit Grocery Item" : "Add New Grocery Item"}</DialogTitle>
-                    </DialogHeader>
-                    <FormDialogContent
-                      formData={formData}
-                      setFormData={setFormData}
-                      activeTab={activeTab}
-                      users={users}
-                      categories={categories}
-                      editingItem={editingItem}
-                      updateStorageLocation={updateStorageLocation}
-                      toggleUserSelection={toggleUserSelection}
-                      handleAddItem={handleAddItem}
-                      handleEditItem={handleEditItem}
-                      handleAddToShoppingList={handleAddToShoppingList}
-                    />
-                  </DialogContent>
-                </Dialog>
-              </div>
-
-              {/* Items Display - Mobile Optimized */}
-              <Card>
-                <CardHeader className="pb-3 md:pb-4">
-                  <CardTitle className="text-lg md:text-xl">Your Grocery Stock</CardTitle>
-                </CardHeader>
-                <CardContent className="p-2 md:p-6">
-                  {filteredItems.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground text-sm md:text-base">
-                      {searchTerm || selectedCategoryFilter
-                        ? "No items match your filters."
-                        : "No items in stock. Add your first item!"}
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {filteredItems.map((item) => (
-                        <div key={item.id} className="border rounded-lg">
-                          <Collapsible
-                            open={expandedItems.has(item.id)}
-                            onOpenChange={() => toggleItemExpansion(item.id)}
-                          >
-                            <CollapsibleTrigger asChild>
-                              <div className="flex items-center justify-between p-3 md:p-4 hover:bg-muted/50 cursor-pointer min-h-[60px] md:min-h-auto">
-                                <div className="flex items-center gap-2 md:gap-3 flex-1">
-                                  {expandedItems.has(item.id) ? (
-                                    <ChevronDown className="h-4 w-4 flex-shrink-0" />
-                                  ) : (
-                                    <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                                  )}
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <div className="font-medium text-sm md:text-base truncate">{item.name}</div>
-                                      {item.category && (
-                                        <Badge className={`${item.category.color} text-white text-xs`}>
-                                          {item.category.icon} {item.category.name}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <div className="text-xs md:text-sm text-muted-foreground">
-                                      {item.storageLocations.length} location
-                                      {item.storageLocations.length !== 1 ? "s" : ""}
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-                                  <Badge variant={getQuantityBadgeVariant(getTotalQuantity(item))} className="text-xs">
-                                    {getTotalQuantity(item)}
-                                  </Badge>
-                                  <div className="hidden md:flex items-center gap-1">
-                                    {item.allowedUsers.map((userId) => {
-                                      const user = users.find((u) => u.id === userId)
-                                      return user ? (
-                                        <div
-                                          key={userId}
-                                          className={`w-6 h-6 rounded-full ${user.color} flex items-center justify-center text-white text-xs font-medium`}
-                                          title={user.name}
-                                        >
-                                          {user.name.charAt(0)}
-                                        </div>
-                                      ) : null
-                                    })}
-                                  </div>
-                                  <div className="flex gap-1 md:gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        openEditDialog(item)
-                                        setIsAddDialogOpen(true)
-                                      }}
-                                      className="h-8 w-8 md:h-9 md:w-9 p-0"
-                                    >
-                                      <Edit2 className="h-3 w-3 md:h-4 md:w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        handleDeleteItem(item.id)
-                                      }}
-                                      className="h-8 w-8 md:h-9 md:w-9 p-0"
-                                    >
-                                      <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            </CollapsibleTrigger>
-
-                            <CollapsibleContent>
-                              <div className="px-3 md:px-4 pb-3 md:pb-4 border-t bg-muted/20">
-                                <div className="pt-3 space-y-3">
-                                  {item.storageLocations.map((location) => (
-                                    <div
-                                      key={location.id}
-                                      className="flex items-center justify-between py-3 px-3 bg-background rounded-lg border"
-                                    >
-                                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                                        <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                        <span className="font-medium text-sm md:text-base truncate">
-                                          {location.location}
-                                        </span>
-                                      </div>
-                                      <div className="flex items-center gap-3 flex-shrink-0">
-                                        <QuantityAdjuster
-                                          value={location.quantity}
-                                          onChange={async (newQuantity) => {
-                                            if (newQuantity === 0) {
-                                              // Remove this location entirely
-                                              const updatedLocations = item.storageLocations.filter(
-                                                (loc) => loc.id !== location.id,
-                                              )
-
-                                              if (updatedLocations.length === 0) {
-                                                // If no locations left, delete the entire item
-                                                await handleDeleteItem(item.id)
-                                              } else {
-                                                await updateGroceryItem(item.id, {
-                                                  storageLocations: updatedLocations.map((loc) => ({
-                                                    location: loc.location,
-                                                    quantity: loc.quantity,
-                                                  })),
-                                                })
-                                              }
-                                            } else {
-                                              const updatedLocations = item.storageLocations.map((loc) =>
-                                                loc.id === location.id ? { ...loc, quantity: newQuantity } : loc,
-                                              )
-
-                                              await updateGroceryItem(item.id, {
-                                                storageLocations: updatedLocations.map((loc) => ({
-                                                  location: loc.location,
-                                                  quantity: loc.quantity,
-                                                })),
-                                              })
-                                            }
-                                          }}
-                                          min={0}
-                                          max={999}
-                                        />
-                                        <Badge
-                                          variant={getQuantityBadgeVariant(location.quantity)}
-                                          className="min-w-[50px] justify-center text-xs"
-                                        >
-                                          {location.quantity}
-                                        </Badge>
-                                      </div>
-                                    </div>
-                                  ))}
-                                  <div className="text-xs text-muted-foreground pt-2 border-t">
-                                    Added: {item.addedDate} • Total: {getTotalQuantity(item)} items
-                                    {item.category && (
-                                      <span>
-                                        {" "}
-                                        • Category: {item.category.icon} {item.category.name}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </CollapsibleContent>
-                          </Collapsible>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="categories" className="space-y-4 md:space-y-6">
-              <CategoryManager
-                categories={categories}
-                onCreateCategory={createCategory}
-                onUpdateCategory={updateCategory}
-                onDeleteCategory={deleteCategory}
-              />
-            </TabsContent>
-
-            <TabsContent value="shopping" className="space-y-4 md:space-y-6">
-              {/* Shopping List Stats - Mobile Optimized */}
-              <div className="grid grid-cols-3 gap-2 md:gap-4">
-                <Card>
-                  <CardHeader className="pb-1 md:pb-2">
-                    <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">To Buy</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="text-lg md:text-2xl font-bold">
-                      {shoppingList.filter((item) => !item.isCompleted).length}
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-1 md:pb-2">
-                    <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Done</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="text-lg md:text-2xl font-bold text-green-600">
-                      {shoppingList.filter((item) => item.isCompleted).length}
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-1 md:pb-2">
-                    <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Total</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="text-lg md:text-2xl font-bold">{shoppingList.length}</div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Shopping List Controls */}
-              <div className="flex flex-col gap-3 md:flex-row md:gap-4">
-                <Button
-                  onClick={addLowStockToShoppingList}
-                  variant="outline"
-                  className="min-h-[44px] md:min-h-auto bg-transparent"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Add Low Stock Items</span>
-                  <span className="sm:hidden">Add Low Stock</span>
-                </Button>
-
-                <Dialog
-                  open={isAddDialogOpen}
-                  onOpenChange={(open) => {
-                    if (!open) {
-                      preventScrollToTop()
-                    }
-                    setIsAddDialogOpen(open)
-                  }}
-                >
-                  <DialogTrigger asChild>
-                    <Button onClick={() => resetFormForShopping()} className="min-h-[44px] md:min-h-auto">
-                      <Plus className="h-4 w-4 mr-2" />
-                      <span className="hidden sm:inline">Add Item to List</span>
-                      <span className="sm:hidden">Add Item</span>
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Add Item to Shopping List</DialogTitle>
-                    </DialogHeader>
-                    <FormDialogContent
-                      formData={formData}
-                      setFormData={setFormData}
-                      activeTab={activeTab}
-                      users={users}
-                      categories={categories}
-                      editingItem={editingItem}
-                      updateStorageLocation={updateStorageLocation}
-                      toggleUserSelection={toggleUserSelection}
-                      handleAddItem={handleAddItem}
-                      handleEditItem={handleEditItem}
-                      handleAddToShoppingList={handleAddToShoppingList}
-                    />
-                  </DialogContent>
-                </Dialog>
-              </div>
-
-              {/* Shopping List - Mobile Optimized */}
-              <Card>
-                <CardHeader className="pb-3 md:pb-4">
-                  <CardTitle className="text-lg md:text-xl">Shopping List</CardTitle>
-                </CardHeader>
-                <CardContent className="p-2 md:p-6">
-                  {shoppingList.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground text-sm md:text-base">
-                      No items in your shopping list. Add items or import low stock items!
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {shoppingList.map((item) => (
-                        <div
-                          key={item.id}
-                          className={`flex items-center gap-3 p-3 md:p-4 rounded-lg border min-h-[60px] ${
-                            item.isCompleted ? "bg-muted/50 opacity-75" : "bg-background"
-                          }`}
-                        >
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleToggleShoppingItem(item.id)}
-                            className="p-0 h-auto min-w-[44px] min-h-[44px] flex items-center justify-center"
-                          >
-                            {item.isCompleted ? (
-                              <CheckCircle2 className="h-5 w-5 text-green-600" />
-                            ) : (
-                              <Circle className="h-5 w-5 text-muted-foreground" />
-                            )}
-                          </Button>
-
-                          <div className="flex-1 min-w-0">
-                            <div
-                              className={`font-medium text-sm md:text-base truncate ${
-                                item.isCompleted ? "line-through text-muted-foreground" : ""
-                              }`}
-                            >
-                              {item.name}
-                            </div>
-                            <div className="text-xs md:text-sm text-muted-foreground">Qty: {item.quantity}</div>
-                          </div>
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteShoppingItem(item.id)}
-                            className="text-muted-foreground hover:text-destructive min-w-[44px] min-h-[44px] p-0"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="users" className="space-y-4 md:space-y-6">
-              {/* Current User - Mobile Optimized */}
-              {currentUser && (
-                <Card>
-                  <CardHeader className="pb-3 md:pb-4">
-                    <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                      <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full ${currentUser.color}`} />
-                      Current User: {currentUser.name}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-muted-foreground">{currentUser.email}</div>
-                  </CardContent>
-                </Card>
               )}
+            </div>
 
-              {/* Access Key Management - Mobile Optimized */}
-              <Card>
-                <CardHeader className="pb-3 md:pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                    <Key className="h-4 w-4 md:h-5 md:w-5" />
-                    Access Key
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Alert>
-                    <Key className="h-4 w-4" />
-                    <AlertDescription className="text-sm">
-                      Share this key with others to give them access to your grocery tracker.
-                    </AlertDescription>
-                  </Alert>
+            <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+              {filteredItems.length === 0 ? (
+                <EmptyState
+                  icon={<Package className="h-5 w-5" />}
+                  title={searchTerm || selectedCategoryFilter ? "Nothing matches" : "Your pantry is empty"}
+                  description={
+                    searchTerm || selectedCategoryFilter
+                      ? "Try a different search or category."
+                      : "Add your first item to start tracking what you have at home."
+                  }
+                />
+              ) : (
+                <ul className="divide-y divide-border/70">
+                  {filteredItems.map((item) => {
+                    const total = getTotalQuantity(item)
+                    const isLow = total <= LOW_STOCK_THRESHOLD
+                    const isOpen = expandedItems.has(item.id)
+                    return (
+                      <li key={item.id}>
+                        <Collapsible open={isOpen} onOpenChange={() => toggleItemExpansion(item.id)}>
+                          <CollapsibleTrigger asChild>
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              className="flex cursor-pointer items-center gap-3 px-4 py-3.5 transition-colors hover:bg-accent/40 focus-visible:bg-accent/40 focus-visible:outline-none md:gap-4 md:px-5"
+                            >
+                              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted text-xl">
+                                {item.category?.icon ?? <Package className="h-4 w-4 text-muted-foreground" />}
+                              </span>
 
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center">
-                    <Input value={accessKey} readOnly className="font-mono text-xs md:text-sm flex-1" />
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={copyAccessKey}
-                        variant="outline"
-                        size="sm"
-                        className="min-h-[44px] md:min-h-auto flex-1 md:flex-none bg-transparent"
-                      >
-                        <Copy className="h-4 w-4 mr-2 md:mr-0" />
-                        <span className="md:hidden">Copy</span>
-                      </Button>
-                      <Button
-                        onClick={regenerateAccessKey}
-                        variant="outline"
-                        size="sm"
-                        className="min-h-[44px] md:min-h-auto flex-1 md:flex-none bg-transparent"
-                      >
-                        <span className="text-xs md:text-sm">Regenerate</span>
-                      </Button>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-[15px] font-medium">{item.name}</p>
+                                <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-muted-foreground">
+                                  {item.category && (
+                                    <>
+                                      <Dot color={item.category.color} />
+                                      <span className="truncate">{item.category.name}</span>
+                                      <span aria-hidden>·</span>
+                                    </>
+                                  )}
+                                  <span className="shrink-0">
+                                    {item.storageLocations.length} location
+                                    {item.storageLocations.length !== 1 ? "s" : ""}
+                                  </span>
+                                </p>
+                              </div>
+
+                              <div className="hidden -space-x-1.5 md:flex">
+                                {item.allowedUsers.map((userId) => {
+                                  const user = users.find((u) => u.id === userId)
+                                  return user ? (
+                                    <Avatar key={userId} name={user.name} color={user.color} size="sm" />
+                                  ) : null
+                                })}
+                              </div>
+
+                              <div className="flex w-12 shrink-0 flex-col items-end">
+                                <span
+                                  className={cn(
+                                    "font-display text-[1.75rem] leading-none tabular-nums",
+                                    isLow && "text-warning",
+                                  )}
+                                >
+                                  {total}
+                                </span>
+                                {isLow && (
+                                  <span className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-warning">
+                                    Low
+                                  </span>
+                                )}
+                              </div>
+
+                              <ChevronDown
+                                className={cn(
+                                  "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                                  isOpen && "rotate-180",
+                                )}
+                              />
+                            </div>
+                          </CollapsibleTrigger>
+
+                          <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down [--radix-accordion-content-height:var(--radix-collapsible-content-height)]">
+                            <div className="px-4 pb-4 md:px-5 md:pl-[5.25rem]">
+                              <div className="divide-y divide-border/70 rounded-xl border border-border/70 bg-background/60">
+                                {item.storageLocations.map((location) => (
+                                  <div key={location.id} className="flex items-center justify-between gap-3 py-2 pl-3.5 pr-2">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                      <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                      <span className="truncate text-sm">{location.location}</span>
+                                    </div>
+                                    <QuantityAdjuster
+                                      value={location.quantity}
+                                      onChange={async (newQuantity) => {
+                                        if (newQuantity === 0) {
+                                          // Remove this location entirely
+                                          const updatedLocations = item.storageLocations.filter(
+                                            (loc) => loc.id !== location.id,
+                                          )
+
+                                          if (updatedLocations.length === 0) {
+                                            // If no locations left, delete the entire item
+                                            await handleDeleteItem(item.id)
+                                          } else {
+                                            await updateGroceryItem(item.id, {
+                                              storageLocations: updatedLocations.map((loc) => ({
+                                                location: loc.location,
+                                                quantity: loc.quantity,
+                                              })),
+                                            })
+                                          }
+                                        } else {
+                                          const updatedLocations = item.storageLocations.map((loc) =>
+                                            loc.id === location.id ? { ...loc, quantity: newQuantity } : loc,
+                                          )
+
+                                          await updateGroceryItem(item.id, {
+                                            storageLocations: updatedLocations.map((loc) => ({
+                                              location: loc.location,
+                                              quantity: loc.quantity,
+                                            })),
+                                          })
+                                        }
+                                      }}
+                                      min={0}
+                                      max={999}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+
+                              <div className="mt-3 flex items-center justify-between gap-3">
+                                <p className="text-xs text-muted-foreground">Added {item.addedDate}</p>
+                                <div className="flex gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      openEditDialog(item)
+                                      setIsAddDialogOpen(true)
+                                    }}
+                                    className="h-9 text-muted-foreground hover:text-foreground"
+                                  >
+                                    <Pencil className="!size-3.5" /> Edit
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteItem(item.id)}
+                                    className="h-9 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                  >
+                                    <Trash2 className="!size-3.5" /> Delete
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* ───────────── Categories ───────────── */}
+          <TabsContent value="categories" className="mt-0">
+            <CategoryManager
+              categories={categories}
+              onCreateCategory={createCategory}
+              onUpdateCategory={updateCategory}
+              onDeleteCategory={deleteCategory}
+            />
+          </TabsContent>
+
+          {/* ───────────── Shopping list ───────────── */}
+          <TabsContent value="shopping" className="mt-0 space-y-6 md:space-y-8">
+            <SectionHeader
+              eyebrow="To buy"
+              title="Shopping list"
+              description={
+                shoppingList.length
+                  ? `${pendingShopping.length} remaining · ${completedShopping.length} in the basket`
+                  : undefined
+              }
+              action={itemDialog("shopping")}
+            />
+
+            {shoppingList.length > 0 && (
+              <div className="h-1 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-[width] duration-500"
+                  style={{ width: `${shoppingProgress}%` }}
+                />
+              </div>
+            )}
+
+            {lowStockCount > 0 && (
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-warning/20 bg-warning/[0.06] p-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">
+                    {lowStockCount} {lowStockCount === 1 ? "item is" : "items are"} running low
+                  </p>
+                  <p className="text-xs text-muted-foreground">Add them to your list in one tap.</p>
+                </div>
+                <Button onClick={addLowStockToShoppingList} variant="outline" size="sm" className="shrink-0">
+                  <Plus /> Add all
+                </Button>
+              </div>
+            )}
+
+            {shoppingList.length === 0 ? (
+              <div className="rounded-2xl border border-border/70 bg-card">
+                <EmptyState
+                  icon={<ShoppingBasket className="h-5 w-5" />}
+                  title="Nothing to buy"
+                  description="Add items manually or pull in what's running low in your pantry."
+                />
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {pendingShopping.length > 0 && (
+                  <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/70 bg-card">
+                    {pendingShopping.map(renderShoppingRow)}
+                  </ul>
+                )}
+                {completedShopping.length > 0 && (
+                  <div className="space-y-2.5">
+                    <FieldLabel className="block px-1">In the basket</FieldLabel>
+                    <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/70 bg-card/60">
+                      {completedShopping.map(renderShoppingRow)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ───────────── Household ───────────── */}
+          <TabsContent value="users" className="mt-0 space-y-6 md:space-y-8">
+            <SectionHeader eyebrow="Household" title="Members" />
+
+            <div className="grid gap-4 md:grid-cols-5 md:gap-6">
+              <div className="space-y-4 md:col-span-2 md:space-y-6">
+                {currentUser && (
+                  <div className="flex items-center gap-4 rounded-2xl border border-border/70 bg-card p-5">
+                    <Avatar name={currentUser.name} color={currentUser.color} size="lg" />
+                    <div className="min-w-0">
+                      <p className="truncate font-display text-2xl leading-tight">{currentUser.name}</p>
+                      <p className="truncate text-sm text-muted-foreground">{currentUser.email}</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                )}
 
-              {/* Manage Users - Mobile Optimized */}
-              <Card>
-                <CardHeader className="pb-3 md:pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                    <Settings className="h-4 w-4 md:h-5 md:w-5" />
-                    Manage Users
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {users.map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center justify-between p-3 border rounded-lg min-h-[60px]"
-                      >
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div
-                            className={`w-8 h-8 rounded-full ${user.color} flex items-center justify-center text-white font-medium flex-shrink-0`}
-                          >
-                            {user.name.charAt(0)}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium text-sm md:text-base truncate">{user.name}</div>
-                            <div className="text-xs md:text-sm text-muted-foreground">
-                              {user.id === currentUser?.id ? "Current User" : user.email || "Member"}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <Badge variant="outline" className="text-xs">
-                            {items.filter((item) => item.allowedUsers.includes(user.id)).length}
-                          </Badge>
-                          {user.id !== currentUser?.id && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeUser(user.id)}
-                              className="text-destructive hover:text-destructive min-w-[44px] min-h-[44px] p-0"
-                            >
-                              <UserMinus className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                <div className="space-y-4 rounded-2xl border border-border/70 bg-card p-5">
+                  <div>
+                    <FieldLabel>Access key</FieldLabel>
+                    <p className="mt-1.5 text-sm text-muted-foreground">
+                      Share this key so others can join your household.
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+                  <div className="flex items-center gap-1 rounded-xl border bg-background/60 p-1 pl-3.5">
+                    <code className="min-w-0 flex-1 truncate font-mono text-sm">{accessKey || "—"}</code>
+                    <Button
+                      onClick={copyAccessKey}
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Copy access key"
+                      className="h-9 w-9 shrink-0 rounded-lg"
+                    >
+                      <Copy className="!size-4" />
+                    </Button>
+                  </div>
+                  <Button onClick={regenerateAccessKey} variant="outline" size="sm" className="w-full">
+                    <RefreshCw className="!size-3.5" /> Regenerate key
+                  </Button>
+                </div>
+              </div>
+
+              <div className="md:col-span-3">
+                <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/70 bg-card">
+                  {users.map((user) => {
+                    const itemCount = items.filter((item) => item.allowedUsers.includes(user.id)).length
+                    const isMe = user.id === currentUser?.id
+                    return (
+                      <li key={user.id} className="flex items-center gap-3 px-4 py-3.5 md:px-5">
+                        <Avatar name={user.name} color={user.color} />
+                        <div className="min-w-0 flex-1">
+                          <p className="flex items-center gap-2 truncate text-[15px] font-medium">
+                            {user.name}
+                            {isMe && (
+                              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                                You
+                              </span>
+                            )}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {itemCount} {itemCount === 1 ? "item" : "items"}
+                            {user.email && !isMe ? ` · ${user.email}` : ""}
+                          </p>
+                        </div>
+                        {!isMe && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeUser(user.id)}
+                            aria-label={`Remove ${user.name}`}
+                            className="h-10 w-10 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <UserMinus className="!size-4" />
+                          </Button>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            </div>
+          </TabsContent>
+        </main>
+      </Tabs>
     </AuthGuard>
   )
 }

@@ -43,36 +43,42 @@ export function QuantityAdjuster({
   }
 
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
+    <div
+      className={`inline-flex h-10 items-center rounded-full border border-input bg-card p-0.5 md:h-9 ${className}`}
+    >
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={handleDecrement}
         disabled={value <= min}
-        className="h-10 w-10 md:h-8 md:w-8 p-0 bg-transparent min-w-[40px] min-h-[40px] md:min-w-[32px] md:min-h-[32px] touch-manipulation"
+        aria-label="Decrease quantity"
+        className="h-9 w-9 rounded-full p-0 touch-manipulation md:h-8 md:w-8"
       >
-        <Minus className="h-4 w-4 md:h-3 md:w-3" />
+        <Minus className="h-3.5 w-3.5" />
       </Button>
 
       <Input
         type="number"
+        inputMode="numeric"
         value={value}
         onChange={handleInputChange}
         min={min}
         max={max}
-        className="h-10 w-16 md:h-8 md:w-16 text-center text-base md:text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none min-h-[40px] md:min-h-[32px]"
+        aria-label="Quantity"
+        className="h-8 w-11 border-0 bg-transparent px-0 text-center text-base font-medium tabular-nums shadow-none focus-visible:ring-0 md:text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       />
 
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={handleIncrement}
         disabled={value >= max}
-        className="h-10 w-10 md:h-8 md:w-8 p-0 min-w-[40px] min-h-[40px] md:min-w-[32px] md:min-h-[32px] touch-manipulation"
+        aria-label="Increase quantity"
+        className="h-9 w-9 rounded-full p-0 touch-manipulation md:h-8 md:w-8"
       >
-        <Plus className="h-4 w-4 md:h-3 md:w-3" />
+        <Plus className="h-3.5 w-3.5" />
       </Button>
     </div>
   )
