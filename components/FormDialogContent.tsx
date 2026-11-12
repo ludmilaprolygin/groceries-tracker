@@ -4,8 +4,8 @@ import React from "react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
+import { ArrowLeft, Plus, X } from "lucide-react"
+import { Chip, Dot, FieldLabel } from "@/components/Primitives"
 import { LocationGrid, LAVADERO_LOCATIONS, COCINA_LOCATIONS } from "@/components/LocationGrid"
 import { QuantityAdjuster } from "@/components/QuantityAdjuster"
 import type { User, GroceryItem, Category } from "@/hooks/useDatabase"
@@ -73,46 +73,45 @@ export const FormDialogContent = React.memo(
       return () => clearTimeout(timeoutId)
     }, [localName, formData.name, setFormData])
 
+    const canSubmitStock = formData.storageLocations.some(
+      (loc) => loc.location && loc.quantity && Number.parseInt(loc.quantity) > 0,
+    )
+
     return (
-      <div className="grid gap-6 py-4">
+      <div className="grid gap-7 pt-2">
         <div className="grid gap-2">
-          <Label htmlFor="name">Product Name</Label>
+          <FieldLabel htmlFor="name">Product</FieldLabel>
           <Input
             id="name"
             value={localName}
             onChange={(e) => setLocalName(e.target.value)}
-            placeholder="e.g., Apples, Milk, Bread"
-            className="text-base"
+            placeholder="e.g. Olive oil, Oat milk, Bread"
+            className="h-12 text-base"
             autoFocus
           />
         </div>
 
         {/* Category Selection */}
-        <div className="grid gap-2">
-          <Label>Category (Optional)</Label>
-          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-            <Button
-              type="button"
-              variant={!formData.categoryId ? "default" : "outline"}
-              size="sm"
+        <div className="grid gap-2.5">
+          <FieldLabel>
+            Category <span className="normal-case tracking-normal text-muted-foreground/70">· optional</span>
+          </FieldLabel>
+          <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 no-scrollbar sm:mx-0 sm:flex-wrap sm:px-0">
+            <Chip
+              active={!formData.categoryId}
               onClick={() => setFormData((prev) => ({ ...prev, categoryId: undefined }))}
-              className="flex items-center gap-2 min-h-[44px]"
             >
-              <span>📦</span>
-              No Category
-            </Button>
+              None
+            </Chip>
             {categories.map((category) => (
-              <Button
+              <Chip
                 key={category.id}
-                type="button"
-                variant={formData.categoryId === category.id ? "default" : "outline"}
-                size="sm"
+                active={formData.categoryId === category.id}
                 onClick={() => setFormData((prev) => ({ ...prev, categoryId: category.id }))}
-                className="flex items-center gap-2 min-h-[44px]"
               >
-                <span>{category.icon}</span>
-                <Badge className={`${category.color} text-white text-xs`}>{category.name}</Badge>
-              </Button>
+                <span className="text-base leading-none">{category.icon}</span>
+                {category.name}
+              </Chip>
             ))}
           </div>
         </div>
@@ -120,46 +119,37 @@ export const FormDialogContent = React.memo(
         {activeTab === "stock" && (
           <>
             {!formData.locationCategory ? (
-              <div className="grid gap-4">
-                <Label>Choose Storage Area</Label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setFormData((prev) => ({ ...prev, locationCategory: "lavadero" }))}
-                    className="min-h-[60px] md:min-h-[80px] text-base font-medium flex flex-col gap-2"
-                  >
-                    <span className="text-2xl">🧺</span>
-                    Lavadero
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setFormData((prev) => ({ ...prev, locationCategory: "cocina" }))}
-                    className="min-h-[60px] md:min-h-[80px] text-base font-medium flex flex-col gap-2"
-                  >
-                    <span className="text-2xl">🍳</span>
-                    Cocina
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setFormData((prev) => ({ ...prev, locationCategory: "otros" }))}
-                    className="min-h-[60px] md:min-h-[80px] text-base font-medium flex flex-col gap-2"
-                  >
-                    <span className="text-2xl">📦</span>
-                    Otros
-                  </Button>
+              <div className="grid gap-2.5">
+                <FieldLabel>Where is it stored?</FieldLabel>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {(
+                    [
+                      { id: "lavadero", label: "Lavadero", icon: "🧺" },
+                      { id: "cocina", label: "Cocina", icon: "🍳" },
+                      { id: "otros", label: "Otros", icon: "📦" },
+                    ] as const
+                  ).map((area) => (
+                    <button
+                      key={area.id}
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, locationCategory: area.id }))}
+                      className="flex aspect-[4/3] flex-col items-center justify-center gap-2 rounded-2xl border bg-card text-sm font-medium transition-all hover:-translate-y-0.5 hover:border-foreground/25 hover:shadow-sm"
+                    >
+                      <span className="text-2xl leading-none">{area.icon}</span>
+                      {area.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             ) : formData.locationCategory === "otros" ? (
-              <div className="grid gap-4">
+              <div className="grid gap-3">
                 <div className="flex items-center justify-between">
-                  <Label>Custom Location</Label>
+                  <FieldLabel>Custom locations</FieldLabel>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
+                    className="-mr-2 h-8 text-muted-foreground"
                     onClick={() =>
                       setFormData((prev) => ({
                         ...prev,
@@ -169,52 +159,44 @@ export const FormDialogContent = React.memo(
                       }))
                     }
                   >
-                    ← Back
+                    <ArrowLeft className="!size-3.5" />
+                    Change area
                   </Button>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {formData.storageLocations.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Click "Add Location" to add your first custom location
+                    <div className="rounded-2xl border border-dashed py-8 text-center text-sm text-muted-foreground">
+                      Add your first custom location
                     </div>
                   )}
                   {formData.storageLocations.map((location, index) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end p-3 border rounded-lg">
-                      <div className="grid gap-2">
-                        <Label>Location Name</Label>
-                        <Input
-                          placeholder="Enter location name"
-                          value={location.location}
-                          onChange={(e) => updateStorageLocation(index, "location", e.target.value)}
-                          className="text-base"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label>Quantity</Label>
-                        <div className="flex justify-center">
-                          <QuantityAdjuster
-                            value={Number.parseInt(location.quantity) || 0}
-                            onChange={(value) => updateStorageLocation(index, "quantity", value.toString())}
-                            min={0}
-                            max={999}
-                          />
-                        </div>
-                      </div>
+                    <div key={index} className="flex items-center gap-2 rounded-2xl border bg-card p-2 pl-3">
+                      <Input
+                        placeholder="Location name"
+                        value={location.location}
+                        onChange={(e) => updateStorageLocation(index, "location", e.target.value)}
+                        className="h-10 min-w-0 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0"
+                      />
+                      <QuantityAdjuster
+                        value={Number.parseInt(location.quantity) || 0}
+                        onChange={(value) => updateStorageLocation(index, "quantity", value.toString())}
+                        min={0}
+                        max={999}
+                      />
                       {formData.storageLocations.length > 1 && (
-                        <div className="col-span-1 md:col-span-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const updated = formData.storageLocations.filter((_, i) => i !== index)
-                              setFormData((prev) => ({ ...prev, storageLocations: updated }))
-                            }}
-                            className="text-destructive hover:text-destructive w-full"
-                          >
-                            Remove Location
-                          </Button>
-                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Remove location"
+                          onClick={() => {
+                            const updated = formData.storageLocations.filter((_, i) => i !== index)
+                            setFormData((prev) => ({ ...prev, storageLocations: updated }))
+                          }}
+                          className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="!size-4" />
+                        </Button>
                       )}
                     </div>
                   ))}
@@ -227,20 +209,21 @@ export const FormDialogContent = React.memo(
                         storageLocations: [...prev.storageLocations, { location: "", quantity: "1" }],
                       }))
                     }
-                    className="w-full"
+                    className="h-11 w-full border-dashed"
                   >
-                    + Add Location
+                    <Plus /> Add location
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="grid gap-4">
                 <div className="flex items-center justify-between">
-                  <Label>Storage Locations - {formData.locationCategory === "lavadero" ? "Lavadero" : "Cocina"}</Label>
+                  <FieldLabel>Storage area</FieldLabel>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
+                    className="-mr-2 h-8 text-muted-foreground"
                     onClick={() =>
                       setFormData((prev) => ({
                         ...prev,
@@ -250,7 +233,8 @@ export const FormDialogContent = React.memo(
                       }))
                     }
                   >
-                    ← Back
+                    <ArrowLeft className="!size-3.5" />
+                    Change area
                   </Button>
                 </div>
                 <LocationGrid
@@ -281,40 +265,39 @@ export const FormDialogContent = React.memo(
                 />
 
                 {formData.storageLocations.length > 0 && (
-                  <div className="space-y-3">
-                    <Label>Adjust Quantities</Label>
-                    {formData.storageLocations.map((location, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                        <span className="font-medium">{location.location}</span>
-                        <QuantityAdjuster
-                          value={Number.parseInt(location.quantity) || 0}
-                          onChange={(value) => updateStorageLocation(index, "quantity", value.toString())}
-                          min={0}
-                          max={999}
-                        />
-                      </div>
-                    ))}
+                  <div className="grid gap-2.5">
+                    <FieldLabel>Quantities</FieldLabel>
+                    <div className="divide-y rounded-2xl border bg-card">
+                      {formData.storageLocations.map((location, index) => (
+                        <div key={index} className="flex items-center justify-between gap-3 py-2 pl-4 pr-2">
+                          <span className="truncate text-sm font-medium">{location.location}</span>
+                          <QuantityAdjuster
+                            value={Number.parseInt(location.quantity) || 0}
+                            onChange={(value) => updateStorageLocation(index, "quantity", value.toString())}
+                            min={0}
+                            max={999}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
             )}
 
             {formData.locationCategory && (
-              <div className="grid gap-2">
-                <Label>Allowed Users</Label>
+              <div className="grid gap-2.5">
+                <FieldLabel>Shared with</FieldLabel>
                 <div className="flex flex-wrap gap-2">
                   {users.map((user) => (
-                    <Button
+                    <Chip
                       key={user.id}
-                      type="button"
-                      variant={formData.allowedUsers.includes(user.id) ? "default" : "outline"}
-                      size="sm"
+                      active={formData.allowedUsers.includes(user.id)}
                       onClick={() => toggleUserSelection(user.id)}
-                      className="flex items-center gap-2 min-h-[44px]"
                     >
-                      <div className={`w-3 h-3 rounded-full ${user.color}`} />
+                      <Dot color={user.color} className="ring-1 ring-white/40" />
                       {user.name}
-                    </Button>
+                    </Chip>
                   ))}
                 </div>
               </div>
@@ -323,45 +306,30 @@ export const FormDialogContent = React.memo(
         )}
 
         {activeTab === "shopping" && (
-          <div className="grid gap-4">
-            <div className="text-sm text-muted-foreground text-center">
-              Items added here will go to your shopping list
+          <div className="flex items-center justify-between rounded-2xl border bg-card py-2 pl-4 pr-2">
+            <div>
+              <p className="text-sm font-medium">Quantity</p>
+              <p className="text-xs text-muted-foreground">Goes straight to your list</p>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="shop-quantity">Quantity</Label>
-              <div className="flex justify-center">
-                <QuantityAdjuster
-                  value={Number.parseInt(formData.storageLocations[0]?.quantity) || 1}
-                  onChange={(value) => updateStorageLocation(0, "quantity", value.toString())}
-                  min={1}
-                  max={999}
-                />
-              </div>
-            </div>
+            <QuantityAdjuster
+              value={Number.parseInt(formData.storageLocations[0]?.quantity) || 1}
+              onChange={(value) => updateStorageLocation(0, "quantity", value.toString())}
+              min={1}
+              max={999}
+            />
           </div>
         )}
 
         {/* Only show the submit button if we have the required data */}
-        {(activeTab === "shopping" ||
-          (activeTab === "stock" &&
-            formData.locationCategory &&
-            formData.storageLocations.some(
-              (loc) => loc.location && loc.quantity && Number.parseInt(loc.quantity) > 0,
-            ))) && (
+        {(activeTab === "shopping" || (activeTab === "stock" && formData.locationCategory && canSubmitStock)) && (
           <Button
             onClick={(e) =>
               activeTab === "shopping" ? handleAddToShoppingList(e) : editingItem ? handleEditItem(e) : handleAddItem(e)
             }
-            className="w-full min-h-[48px] text-base font-medium"
-            disabled={
-              !localName.trim() ||
-              (activeTab === "stock" &&
-                !formData.storageLocations.some(
-                  (loc) => loc.location && loc.quantity && Number.parseInt(loc.quantity) > 0,
-                ))
-            }
+            className="h-12 w-full text-[15px]"
+            disabled={!localName.trim() || (activeTab === "stock" && !canSubmitStock)}
           >
-            {activeTab === "shopping" ? "Add to Shopping List" : editingItem ? "Update Item" : "Add Item"}
+            {activeTab === "shopping" ? "Add to list" : editingItem ? "Save changes" : "Add to pantry"}
           </Button>
         )}
       </div>

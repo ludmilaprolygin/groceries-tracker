@@ -3,13 +3,12 @@
 import type React from "react"
 import type { Session } from "@supabase/supabase-js"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, createContext, useContext } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Package, UserPlus, Shield } from "lucide-react"
+import { Loader2 } from "lucide-react"
+import { BrandMark } from "@/components/BrandMark"
+import { FieldLabel, NEUTRAL_SWATCHES } from "@/components/Primitives"
 import { toast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase"
 import type { User } from "@/hooks/useDatabase"
@@ -19,18 +18,12 @@ interface AuthGuardProps {
   onAuthenticated: (user: User) => void
 }
 
-const USER_COLORS = [
-  "bg-red-500",
-  "bg-green-500",
-  "bg-blue-500",
-  "bg-yellow-500",
-  "bg-purple-500",
-  "bg-pink-500",
-  "bg-indigo-500",
-  "bg-orange-500",
-  "bg-teal-500",
-  "bg-cyan-500",
-]
+const USER_COLORS = NEUTRAL_SWATCHES
+
+const AuthContext = createContext<{ logout: () => Promise<void> }>({ logout: async () => {} })
+
+/** Access auth actions (e.g. logout) from inside the guarded app. */
+export const useAuth = () => useContext(AuthContext)
 
 function GoogleIcon() {
   return (
@@ -182,106 +175,99 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="flex items-center gap-2">
-          <Package className="h-6 w-6 animate-spin" />
-          <span className="text-sm md:text-base">Loading...</span>
-        </div>
+      <div className="flex min-h-[100dvh] items-center justify-center bg-background p-4">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   if (session && currentUser) {
-    return (
-      <div className="relative">
-        <div className="absolute top-4 right-4 z-50">
-          <Button variant="outline" size="sm" onClick={handleLogout} className="bg-background/80 backdrop-blur-sm">
-            Logout
-          </Button>
-        </div>
-        {children}
-      </div>
-    )
+    return <AuthContext.Provider value={{ logout: handleLogout }}>{children}</AuthContext.Provider>
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Package className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold">Grocery Tracker</h1>
-          </div>
-          <p className="text-muted-foreground">Secure access required to manage your grocery inventory</p>
-        </div>
+    <div className="relative flex min-h-[100dvh] flex-col bg-background">
+      {/* Soft warm glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[55vh] bg-[radial-gradient(ellipse_at_top,hsl(38_30%_88%),transparent_70%)] dark:opacity-20"
+      />
 
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2">
-              {session ? <UserPlus className="h-5 w-5" /> : <Shield className="h-5 w-5" />}
-              {session ? "Join the Tracker" : "Sign In"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!session ? (
-              <Button onClick={handleGoogleLogin} className="w-full gap-2" variant="outline" disabled={isSubmitting}>
-                <GoogleIcon />
-                {isSubmitting ? "Redirecting..." : "Continue with Google"}
-              </Button>
+      <main className="relative mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-5 py-12">
+        <div className="mb-10">
+          <BrandMark className="mb-8" />
+          <h1 className="font-display text-[2.5rem] leading-[1.05]">
+            {session ? (
+              <>
+                Almost <span className="text-muted-foreground">there.</span>
+              </>
             ) : (
               <>
-                <Alert>
-                  <UserPlus className="h-4 w-4" />
-                  <AlertDescription>
-                    Signed in as <strong>{session.user.email}</strong>. Enter the access key from an existing member
-                    to join.
-                  </AlertDescription>
-                </Alert>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="new-user-name">Your Name</Label>
-                  <Input
-                    id="new-user-name"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    placeholder="Enter your name"
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="access-key">Access Key</Label>
-                  <Input
-                    id="access-key"
-                    type="password"
-                    value={accessKey}
-                    onChange={(e) => setAccessKey(e.target.value)}
-                    placeholder="Enter the access key"
-                    className="font-mono"
-                  />
-                </div>
-
-                <Button
-                  onClick={handleJoin}
-                  className="w-full"
-                  disabled={isSubmitting || !userName.trim() || !accessKey.trim()}
-                >
-                  {isSubmitting ? "Creating Account..." : "Join"}
-                </Button>
-
-                <Button onClick={handleLogout} variant="ghost" className="w-full" disabled={isSubmitting}>
-                  Use a different Google account
-                </Button>
+                Your pantry, <span className="text-muted-foreground">quietly</span> organised.
               </>
             )}
+          </h1>
+          <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">
+            {session ? (
+              <>
+                Signed in as <span className="font-medium text-foreground">{session.user.email}</span>. Enter the access
+                key shared by a member of your household to join.
+              </>
+            ) : (
+              "Track what you have, where it lives, and what to buy next — shared with your household."
+            )}
+          </p>
+        </div>
 
-            <div className="pt-4 border-t text-center">
-              <p className="text-xs text-muted-foreground">
-                Need an access key? Ask an existing member to share theirs with you.
-              </p>
+        {!session ? (
+          <Button onClick={handleGoogleLogin} className="h-12 w-full gap-3 text-[15px]" variant="outline" disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className="animate-spin" /> : <GoogleIcon />}
+            {isSubmitting ? "Redirecting…" : "Continue with Google"}
+          </Button>
+        ) : (
+          <div className="space-y-5">
+            <div className="grid gap-2">
+              <FieldLabel htmlFor="new-user-name">Your name</FieldLabel>
+              <Input
+                id="new-user-name"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                placeholder="How should we call you?"
+                className="h-12"
+              />
             </div>
-          </CardContent>
-        </Card>
-      </div>
+
+            <div className="grid gap-2">
+              <FieldLabel htmlFor="access-key">Access key</FieldLabel>
+              <Input
+                id="access-key"
+                type="password"
+                value={accessKey}
+                onChange={(e) => setAccessKey(e.target.value)}
+                placeholder="••••••••"
+                className="h-12 font-mono"
+              />
+            </div>
+
+            <Button
+              onClick={handleJoin}
+              className="h-12 w-full text-[15px]"
+              disabled={isSubmitting || !userName.trim() || !accessKey.trim()}
+            >
+              {isSubmitting && <Loader2 className="animate-spin" />}
+              {isSubmitting ? "Creating account…" : "Join household"}
+            </Button>
+
+            <Button onClick={handleLogout} variant="ghost" className="w-full text-muted-foreground" disabled={isSubmitting}>
+              Use a different Google account
+            </Button>
+          </div>
+        )}
+
+        <p className="mt-10 border-t pt-6 text-xs leading-relaxed text-muted-foreground">
+          Need an access key? Ask an existing member to share it with you from the Household tab.
+        </p>
+      </main>
     </div>
   )
 }
