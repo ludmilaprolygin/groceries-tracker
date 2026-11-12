@@ -1,6 +1,6 @@
 -- =====================================================================
--- Grocery Tracker: esquema completo (base de datos nueva)
--- Ejecutar una sola vez en Supabase → SQL Editor.
+-- Grocery Tracker: esquema inicial
+-- Migración gestionada por Supabase CLI (local: `npm run db:reset`, prod: `npm run db:push`).
 -- Login con Google (Supabase Auth) + access key para unirse al hogar.
 -- =====================================================================
 
