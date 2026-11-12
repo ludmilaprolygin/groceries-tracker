@@ -5,6 +5,7 @@ import type React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Minus, Plus } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface QuantityAdjusterProps {
   value: number
@@ -21,18 +22,16 @@ export function QuantityAdjuster({
   min = 0,
   max = 999,
   step = 1,
-  className = "",
+  className,
 }: QuantityAdjusterProps) {
-  const handleIncrement = (e?: React.MouseEvent) => {
-    e?.preventDefault()
-    const newValue = Math.min(value + step, max)
-    onChange(newValue)
+  const handleIncrement = (e: React.MouseEvent) => {
+    e.preventDefault()
+    onChange(Math.min(value + step, max))
   }
 
-  const handleDecrement = (e?: React.MouseEvent) => {
-    e?.preventDefault()
-    const newValue = Math.max(value - step, min)
-    onChange(newValue)
+  const handleDecrement = (e: React.MouseEvent) => {
+    e.preventDefault()
+    onChange(Math.max(value - step, min))
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +43,7 @@ export function QuantityAdjuster({
 
   return (
     <div
-      className={`inline-flex h-10 items-center rounded-md border border-input glass-control p-0.5 md:h-9 ${className}`}
+      className={cn("inline-flex h-10 items-center rounded-md border border-input glass-control p-0.5 md:h-9", className)}
     >
       <Button
         type="button"
