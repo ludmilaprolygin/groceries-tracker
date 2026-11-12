@@ -6,7 +6,15 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "db:start": "scripts/db.sh local start",
+    "db:stop": "scripts/db.sh local stop",
+    "db:reset": "scripts/db.sh local reset",
+    "db:status": "scripts/db.sh local status",
+    "db:studio": "scripts/db.sh local studio",
+    "db:new": "supabase migration new",
+    "db:push:prod": "scripts/db.sh prod push",
+    "db:status:prod": "scripts/db.sh prod status"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -67,6 +75,7 @@
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "postcss": "^8.5",
+    "supabase": "^3.1.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
   }
