@@ -166,8 +166,8 @@ export function CategoryManager({
               </DialogHeader>
               <div className="grid gap-6 pt-2">
                 {/* Preview */}
-                <div className="flex items-center gap-3 rounded-2xl bg-muted/60 p-4">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-card text-xl ring-1 ring-border">
+                <div className="flex items-center gap-3 rounded-lg bg-muted/60 p-4">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-md bg-white/70 text-xl ring-1 ring-border">
                     {formData.icon}
                   </span>
                   <div className="min-w-0">
@@ -200,7 +200,7 @@ export function CategoryManager({
                         aria-label={color}
                         onClick={() => setFormData((prev) => ({ ...prev, color }))}
                         className={cn(
-                          "flex h-8 w-8 items-center justify-center rounded-full ring-offset-2 ring-offset-background transition-all",
+                          "flex h-8 w-8 items-center justify-center rounded-md ring-offset-2 ring-offset-background transition-all",
                           color,
                           formData.color === color ? "ring-2 ring-foreground" : "hover:scale-110",
                         )}
@@ -213,14 +213,14 @@ export function CategoryManager({
 
                 <div className="grid gap-2.5">
                   <FieldLabel>Icon</FieldLabel>
-                  <div className="grid max-h-40 grid-cols-8 gap-1.5 overflow-y-auto rounded-2xl border bg-card p-2">
+                  <div className="grid max-h-40 grid-cols-8 gap-1.5 overflow-y-auto rounded-lg border glass-control p-2">
                     {CATEGORY_ICONS.map((icon) => (
                       <button
                         key={icon}
                         type="button"
                         onClick={() => setFormData((prev) => ({ ...prev, icon }))}
                         className={cn(
-                          "flex aspect-square items-center justify-center rounded-xl text-lg transition-colors",
+                          "flex aspect-square items-center justify-center rounded-md text-lg transition-colors",
                           formData.icon === icon ? "bg-secondary ring-1 ring-foreground/40" : "hover:bg-accent",
                         )}
                       >
@@ -244,7 +244,7 @@ export function CategoryManager({
       />
 
       {categories.length === 0 ? (
-        <div className="rounded-2xl border border-dashed bg-card/50">
+        <div className="glass rounded-lg border-dashed">
           <EmptyState
             icon={<Tag className="h-5 w-5" />}
             title="No categories yet"
@@ -256,9 +256,9 @@ export function CategoryManager({
           {categories.map((category) => (
             <div
               key={category.id}
-              className="group flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-3 pr-2 transition-shadow hover:shadow-sm"
+              className="group flex items-center gap-3 glass rounded-lg p-3 pr-2 transition-colors hover:bg-white/70"
             >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted text-xl">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-muted text-xl">
                 {category.icon}
               </span>
               <div className="min-w-0 flex-1">

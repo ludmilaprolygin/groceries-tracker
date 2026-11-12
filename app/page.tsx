@@ -48,10 +48,10 @@ import { Avatar, Chip, Dot, EmptyState, FieldLabel, SectionHeader, Stat } from "
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
-  { value: "stock", label: "Pantry", icon: Package },
-  { value: "shopping", label: "List", icon: ShoppingBasket },
-  { value: "categories", label: "Categories", icon: Tag },
-  { value: "users", label: "Household", icon: Users },
+  { value: "stock", label: "Stock", icon: Package },
+  { value: "shopping", label: "Lista de compras", icon: ShoppingBasket },
+  { value: "categories", label: "Categorías", icon: Tag },
+  { value: "users", label: "Grupo familiar", icon: Users },
 ] as const
 
 const LOW_STOCK_THRESHOLD = 3
@@ -69,16 +69,16 @@ function UserMenu({ user, onOpenSettings }: { user: User; onOpenSettings: () => 
           <Avatar name={user.name} color={user.color} />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60 rounded-2xl p-1.5">
+      <DropdownMenuContent align="end" className="glass w-60 rounded-lg p-1.5">
         <DropdownMenuLabel className="px-2.5 py-2 font-normal">
           <p className="truncate text-sm font-medium">{user.name}</p>
           {user.email && <p className="truncate text-xs text-muted-foreground">{user.email}</p>}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="rounded-xl px-2.5 py-2" onSelect={onOpenSettings}>
+        <DropdownMenuItem className="rounded-md px-2.5 py-2" onSelect={onOpenSettings}>
           <Settings2 className="mr-2 h-4 w-4" /> Household settings
         </DropdownMenuItem>
-        <DropdownMenuItem className="rounded-xl px-2.5 py-2 text-destructive focus:text-destructive" onSelect={logout}>
+        <DropdownMenuItem className="rounded-md px-2.5 py-2 text-destructive focus:text-destructive" onSelect={logout}>
           <LogOut className="mr-2 h-4 w-4" /> Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -430,7 +430,7 @@ function GroceryTracker() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-3 bg-background p-4">
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-3 p-4">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         <span className="text-sm text-muted-foreground">Loading your pantry…</span>
       </div>
@@ -514,7 +514,7 @@ function GroceryTracker() {
         </p>
       </div>
 
-      <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+      <span className="shrink-0 rounded-[4px] bg-foreground/[0.06] px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
         ×{item.quantity}
       </span>
 
@@ -532,20 +532,20 @@ function GroceryTracker() {
 
   return (
     <AuthGuard onAuthenticated={handleAuthenticated}>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="min-h-[100dvh] bg-background">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="min-h-[100dvh]">
         {/* Header */}
-        <header className="sticky top-0 z-40 border-b border-border/60">
+        <header className="sticky top-0 z-40 border-b border-white/50 shadow-[0_1px_0_hsl(var(--border)/0.6)]">
           {/* Blur lives on its own layer so the fixed mobile nav below isn't trapped by backdrop-filter */}
-          <div aria-hidden className="absolute inset-0 -z-10 bg-background/80 backdrop-blur-xl" />
+          <div aria-hidden className="absolute inset-0 -z-10 bg-[hsl(var(--glass)/0.6)] backdrop-blur-2xl backdrop-saturate-150" />
           <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4 md:px-8">
             <BrandMark compact />
 
             <TabsList
               className={cn(
                 // Mobile: bottom navigation bar
-                "fixed inset-x-0 bottom-0 z-40 grid h-auto grid-cols-4 rounded-none border-t border-border/60 bg-background/90 p-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))] backdrop-blur-xl",
+                "fixed inset-x-0 bottom-0 z-40 grid h-auto grid-cols-4 rounded-none border-t border-white/60 bg-[hsl(var(--glass)/0.7)] shadow-[0_-1px_0_hsl(var(--border)/0.6)] p-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))] backdrop-blur-2xl backdrop-saturate-150",
                 // Desktop: segmented control in the header
-                "md:static md:inline-flex md:h-10 md:w-auto md:rounded-full md:border md:bg-muted/70 md:p-1 md:backdrop-blur-none",
+                "md:static md:inline-flex md:h-10 md:w-auto md:rounded-md md:border md:border-border/70 md:bg-foreground/[0.04] md:p-1 md:shadow-none md:backdrop-blur-none",
               )}
             >
               {NAV_ITEMS.map(({ value, label, icon: Icon }) => (
@@ -553,10 +553,10 @@ function GroceryTracker() {
                   key={value}
                   value={value}
                   className={cn(
-                    "flex h-auto flex-col gap-1 rounded-xl px-1 py-1.5 text-[10px] font-medium text-muted-foreground",
+                    "flex h-auto flex-col gap-1 rounded-md px-1 py-1.5 text-[10px] font-medium text-muted-foreground",
                     "data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none",
-                    "md:h-8 md:flex-row md:gap-1.5 md:rounded-full md:px-4 md:py-0 md:text-[13px]",
-                    "md:data-[state=active]:bg-card md:data-[state=active]:shadow-sm",
+                    "md:h-8 md:flex-row md:gap-1.5 md:rounded-[5px] md:px-4 md:py-0 md:text-[13px]",
+                    "md:data-[state=active]:bg-primary md:data-[state=active]:text-primary-foreground",
                   )}
                 >
                   <Icon className="h-5 w-5 md:h-3.5 md:w-3.5" strokeWidth={1.75} />
@@ -578,7 +578,7 @@ function GroceryTracker() {
               action={itemDialog("stock")}
             />
 
-            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border/70 bg-border/70 md:grid-cols-4 [&>*]:bg-card">
+            <div className="glass grid grid-cols-2 overflow-hidden rounded-lg md:grid-cols-4 [&>*]:border-foreground/10 [&>*:nth-child(-n+2)]:border-b [&>*:nth-child(odd)]:border-r md:[&>*:nth-child(-n+2)]:border-b-0 md:[&>*:not(:last-child)]:border-r">
               <Stat label="Items" value={items.length} />
               <Stat label="Running low" value={lowStockCount} tone={lowStockCount > 0 ? "warning" : undefined} />
               <Stat label="Units" value={totalQuantity} />
@@ -587,20 +587,20 @@ function GroceryTracker() {
 
             <div className="space-y-3">
               <div className="relative">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search by name or location"
                   value={debouncedSearchTerm}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setDebouncedSearchTerm(e.target.value)
                   }}
-                  className="h-12 rounded-full pl-11 pr-11 text-base md:text-sm" // text-base prevents zoom on iOS
+                  className="h-12 rounded-md pl-11 pr-11 text-base md:text-sm" // text-base prevents zoom on iOS
                 />
                 {debouncedSearchTerm && (
                   <button
                     onClick={() => setDebouncedSearchTerm("")}
                     aria-label="Clear search"
-                    className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-accent"
+                    className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -626,7 +626,7 @@ function GroceryTracker() {
               )}
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+            <div className="glass overflow-hidden rounded-lg">
               {filteredItems.length === 0 ? (
                 <EmptyState
                   icon={<Package className="h-5 w-5" />}
@@ -650,9 +650,9 @@ function GroceryTracker() {
                             <div
                               role="button"
                               tabIndex={0}
-                              className="flex cursor-pointer items-center gap-3 px-4 py-3.5 transition-colors hover:bg-accent/40 focus-visible:bg-accent/40 focus-visible:outline-none md:gap-4 md:px-5"
+                              className="flex cursor-pointer items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/40 focus-visible:bg-white/40 dark:hover:bg-white/5 focus-visible:outline-none md:gap-4 md:px-5"
                             >
-                              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted text-xl">
+                              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-foreground/[0.05] text-xl ring-1 ring-inset ring-foreground/5">
                                 {item.category?.icon ?? <Package className="h-4 w-4 text-muted-foreground" />}
                               </span>
 
@@ -709,7 +709,7 @@ function GroceryTracker() {
 
                           <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down [--radix-accordion-content-height:var(--radix-collapsible-content-height)]">
                             <div className="px-4 pb-4 md:px-5 md:pl-[5.25rem]">
-                              <div className="divide-y divide-border/70 rounded-xl border border-border/70 bg-background/60">
+                              <div className="divide-y divide-border/70 rounded-md border border-border/70 bg-white/45 dark:bg-white/5">
                                 {item.storageLocations.map((location) => (
                                   <div key={location.id} className="flex items-center justify-between gap-3 py-2 pl-3.5 pr-2">
                                     <div className="flex min-w-0 items-center gap-2">
@@ -815,16 +815,16 @@ function GroceryTracker() {
             />
 
             {shoppingList.length > 0 && (
-              <div className="h-1 overflow-hidden rounded-full bg-muted">
+              <div className="h-[3px] overflow-hidden rounded-none bg-foreground/10">
                 <div
-                  className="h-full rounded-full bg-primary transition-[width] duration-500"
+                  className="h-full bg-primary transition-[width] duration-500"
                   style={{ width: `${shoppingProgress}%` }}
                 />
               </div>
             )}
 
             {lowStockCount > 0 && (
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-warning/20 bg-warning/[0.06] p-4">
+              <div className="flex items-center justify-between gap-4 glass rounded-lg border-l-2 !border-l-warning p-4">
                 <div className="min-w-0">
                   <p className="text-sm font-medium">
                     {lowStockCount} {lowStockCount === 1 ? "item is" : "items are"} running low
@@ -838,7 +838,7 @@ function GroceryTracker() {
             )}
 
             {shoppingList.length === 0 ? (
-              <div className="rounded-2xl border border-border/70 bg-card">
+              <div className="glass rounded-lg">
                 <EmptyState
                   icon={<ShoppingBasket className="h-5 w-5" />}
                   title="Nothing to buy"
@@ -848,14 +848,14 @@ function GroceryTracker() {
             ) : (
               <div className="space-y-6">
                 {pendingShopping.length > 0 && (
-                  <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/70 bg-card">
+                  <ul className="divide-y divide-border/70 glass overflow-hidden rounded-lg">
                     {pendingShopping.map(renderShoppingRow)}
                   </ul>
                 )}
                 {completedShopping.length > 0 && (
                   <div className="space-y-2.5">
                     <FieldLabel className="block px-1">In the basket</FieldLabel>
-                    <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/70 bg-card/60">
+                    <ul className="divide-y divide-border/70 glass overflow-hidden rounded-lg opacity-80">
                       {completedShopping.map(renderShoppingRow)}
                     </ul>
                   </div>
@@ -871,7 +871,7 @@ function GroceryTracker() {
             <div className="grid gap-4 md:grid-cols-5 md:gap-6">
               <div className="space-y-4 md:col-span-2 md:space-y-6">
                 {currentUser && (
-                  <div className="flex items-center gap-4 rounded-2xl border border-border/70 bg-card p-5">
+                  <div className="flex items-center gap-4 glass rounded-lg p-5">
                     <Avatar name={currentUser.name} color={currentUser.color} size="lg" />
                     <div className="min-w-0">
                       <p className="truncate font-display text-2xl leading-tight">{currentUser.name}</p>
@@ -880,14 +880,14 @@ function GroceryTracker() {
                   </div>
                 )}
 
-                <div className="space-y-4 rounded-2xl border border-border/70 bg-card p-5">
+                <div className="space-y-4 glass rounded-lg p-5">
                   <div>
                     <FieldLabel>Access key</FieldLabel>
                     <p className="mt-1.5 text-sm text-muted-foreground">
                       Share this key so others can join your household.
                     </p>
                   </div>
-                  <div className="flex items-center gap-1 rounded-xl border bg-background/60 p-1 pl-3.5">
+                  <div className="flex items-center gap-1 rounded-md border bg-white/45 dark:bg-white/5 p-1 pl-3.5">
                     <code className="min-w-0 flex-1 truncate font-mono text-sm">{accessKey || "—"}</code>
                     <Button
                       onClick={copyAccessKey}
@@ -906,7 +906,7 @@ function GroceryTracker() {
               </div>
 
               <div className="md:col-span-3">
-                <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/70 bg-card">
+                <ul className="divide-y divide-border/70 glass overflow-hidden rounded-lg">
                   {users.map((user) => {
                     const itemCount = items.filter((item) => item.allowedUsers.includes(user.id)).length
                     const isMe = user.id === currentUser?.id
@@ -917,7 +917,7 @@ function GroceryTracker() {
                           <p className="flex items-center gap-2 truncate text-[15px] font-medium">
                             {user.name}
                             {isMe && (
-                              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                              <span className="rounded-[4px] bg-foreground/[0.06] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                                 You
                               </span>
                             )}

@@ -133,7 +133,7 @@ export const FormDialogContent = React.memo(
                       key={area.id}
                       type="button"
                       onClick={() => setFormData((prev) => ({ ...prev, locationCategory: area.id }))}
-                      className="flex aspect-[4/3] flex-col items-center justify-center gap-2 rounded-2xl border bg-card text-sm font-medium transition-all hover:-translate-y-0.5 hover:border-foreground/25 hover:shadow-sm"
+                      className="flex aspect-[4/3] flex-col items-center justify-center gap-2 rounded-lg border glass-control text-sm font-medium transition-all hover:-translate-y-0.5 hover:border-foreground/25 hover:shadow-sm"
                     >
                       <span className="text-2xl leading-none">{area.icon}</span>
                       {area.label}
@@ -165,12 +165,12 @@ export const FormDialogContent = React.memo(
                 </div>
                 <div className="space-y-2.5">
                   {formData.storageLocations.length === 0 && (
-                    <div className="rounded-2xl border border-dashed py-8 text-center text-sm text-muted-foreground">
+                    <div className="rounded-lg border border-dashed py-8 text-center text-sm text-muted-foreground">
                       Add your first custom location
                     </div>
                   )}
                   {formData.storageLocations.map((location, index) => (
-                    <div key={index} className="flex items-center gap-2 rounded-2xl border bg-card p-2 pl-3">
+                    <div key={index} className="flex items-center gap-2 rounded-lg border glass-control p-2 pl-3">
                       <Input
                         placeholder="Location name"
                         value={location.location}
@@ -267,7 +267,7 @@ export const FormDialogContent = React.memo(
                 {formData.storageLocations.length > 0 && (
                   <div className="grid gap-2.5">
                     <FieldLabel>Quantities</FieldLabel>
-                    <div className="divide-y rounded-2xl border bg-card">
+                    <div className="divide-y rounded-lg border glass-control">
                       {formData.storageLocations.map((location, index) => (
                         <div key={index} className="flex items-center justify-between gap-3 py-2 pl-4 pr-2">
                           <span className="truncate text-sm font-medium">{location.location}</span>
@@ -306,7 +306,7 @@ export const FormDialogContent = React.memo(
         )}
 
         {activeTab === "shopping" && (
-          <div className="flex items-center justify-between rounded-2xl border bg-card py-2 pl-4 pr-2">
+          <div className="flex items-center justify-between rounded-lg border glass-control py-2 pl-4 pr-2">
             <div>
               <p className="text-sm font-medium">Quantity</p>
               <p className="text-xs text-muted-foreground">Goes straight to your list</p>

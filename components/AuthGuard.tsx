@@ -186,17 +186,18 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
   }
 
   return (
-    <div className="relative flex min-h-[100dvh] flex-col bg-background">
+    <div className="relative flex min-h-[100dvh] flex-col">
       {/* Soft warm glow */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[55vh] bg-[radial-gradient(ellipse_at_top,hsl(38_30%_88%),transparent_70%)] dark:opacity-20"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[55vh] bg-[radial-gradient(ellipse_at_top,hsl(0_0%_100%/0.7),transparent_70%)] dark:opacity-20"
       />
 
       <main className="relative mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-5 py-12">
-        <div className="mb-10">
+        <div className="glass rounded-lg p-6 sm:p-8">
+        <div className="mb-8">
           <BrandMark className="mb-8" />
-          <h1 className="font-display text-[2.5rem] leading-[1.05]">
+          <h1 className="font-display text-[2.25rem] leading-[1.05]">
             {session ? (
               <>
                 Almost <span className="text-muted-foreground">there.</span>
@@ -264,9 +265,10 @@ export function AuthGuard({ children, onAuthenticated }: AuthGuardProps) {
           </div>
         )}
 
-        <p className="mt-10 border-t pt-6 text-xs leading-relaxed text-muted-foreground">
+        <p className="mt-8 border-t border-foreground/10 pt-5 text-xs leading-relaxed text-muted-foreground">
           Need an access key? Ask an existing member to share it with you from the Household tab.
         </p>
+        </div>
       </main>
     </div>
   )

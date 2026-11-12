@@ -44,7 +44,7 @@ export function QuantityAdjuster({
 
   return (
     <div
-      className={`inline-flex h-10 items-center rounded-full border border-input bg-card p-0.5 md:h-9 ${className}`}
+      className={`inline-flex h-10 items-center rounded-md border border-input glass-control p-0.5 md:h-9 ${className}`}
     >
       <Button
         type="button"
@@ -53,7 +53,7 @@ export function QuantityAdjuster({
         onClick={handleDecrement}
         disabled={value <= min}
         aria-label="Decrease quantity"
-        className="h-9 w-9 rounded-full p-0 touch-manipulation md:h-8 md:w-8"
+        className="h-9 w-9 rounded-[5px] p-0 touch-manipulation md:h-8 md:w-8"
       >
         <Minus className="h-3.5 w-3.5" />
       </Button>
@@ -76,7 +76,7 @@ export function QuantityAdjuster({
         onClick={handleIncrement}
         disabled={value >= max}
         aria-label="Increase quantity"
-        className="h-9 w-9 rounded-full p-0 touch-manipulation md:h-8 md:w-8"
+        className="h-9 w-9 rounded-[5px] p-0 touch-manipulation md:h-8 md:w-8"
       >
         <Plus className="h-3.5 w-3.5" />
       </Button>

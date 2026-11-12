@@ -19,74 +19,102 @@
 }
 
 @layer base {
-  /* Warm neutral palette: ivory, sand, stone and charcoal */
+  /* Concrete & glass: cool mineral greys, charcoal steel, frosted panels */
   :root {
-    --background: 40 23% 97%;
-    --foreground: 30 8% 13%;
-    --card: 40 33% 99%;
-    --card-foreground: 30 8% 13%;
-    --popover: 40 33% 99%;
-    --popover-foreground: 30 8% 13%;
-    --primary: 30 7% 15%;
-    --primary-foreground: 40 30% 97%;
-    --secondary: 38 18% 92%;
-    --secondary-foreground: 30 8% 15%;
-    --muted: 38 18% 93%;
-    --muted-foreground: 30 5% 44%;
-    --accent: 38 20% 91%;
-    --accent-foreground: 30 8% 15%;
-    --destructive: 8 52% 46%;
-    --destructive-foreground: 40 30% 97%;
-    --warning: 28 55% 42%;
-    --success: 95 16% 38%;
-    --border: 36 16% 87%;
-    --input: 36 16% 85%;
-    --ring: 30 8% 40%;
-    --chart-1: 30 20% 40%;
-    --chart-2: 95 16% 38%;
-    --chart-3: 28 55% 42%;
-    --chart-4: 36 16% 70%;
-    --chart-5: 30 7% 15%;
-    --radius: 0.875rem;
-    --sidebar-background: 40 23% 97%;
-    --sidebar-foreground: 30 8% 13%;
-    --sidebar-primary: 30 7% 15%;
-    --sidebar-primary-foreground: 40 30% 97%;
-    --sidebar-accent: 38 20% 91%;
-    --sidebar-accent-foreground: 30 8% 15%;
-    --sidebar-border: 36 16% 87%;
-    --sidebar-ring: 30 8% 40%;
+    --background: 220 5% 90%;
+    --foreground: 220 9% 12%;
+    --card: 220 10% 99%;
+    --card-foreground: 220 9% 12%;
+    --popover: 220 10% 98%;
+    --popover-foreground: 220 9% 12%;
+    --primary: 220 8% 14%;
+    --primary-foreground: 220 10% 97%;
+    --secondary: 220 6% 86%;
+    --secondary-foreground: 220 9% 14%;
+    --muted: 220 6% 87%;
+    --muted-foreground: 220 5% 40%;
+    --accent: 220 7% 84%;
+    --accent-foreground: 220 9% 14%;
+    --destructive: 4 50% 45%;
+    --destructive-foreground: 220 10% 97%;
+    --warning: 30 48% 40%;
+    --success: 160 14% 34%;
+    --border: 220 6% 78%;
+    --input: 220 6% 76%;
+    --ring: 220 9% 35%;
+    --glass: 220 20% 99%;
+    --glass-edge: 0 0% 100%;
+    --chart-1: 220 8% 40%;
+    --chart-2: 160 14% 34%;
+    --chart-3: 30 48% 40%;
+    --chart-4: 220 6% 70%;
+    --chart-5: 220 8% 14%;
+    --radius: 0.5rem;
+    --sidebar-background: 220 5% 90%;
+    --sidebar-foreground: 220 9% 12%;
+    --sidebar-primary: 220 8% 14%;
+    --sidebar-primary-foreground: 220 10% 97%;
+    --sidebar-accent: 220 7% 84%;
+    --sidebar-accent-foreground: 220 9% 14%;
+    --sidebar-border: 220 6% 78%;
+    --sidebar-ring: 220 9% 35%;
   }
   .dark {
-    --background: 30 6% 8%;
-    --foreground: 40 20% 93%;
-    --card: 30 6% 10%;
-    --card-foreground: 40 20% 93%;
-    --popover: 30 6% 10%;
-    --popover-foreground: 40 20% 93%;
-    --primary: 40 20% 92%;
-    --primary-foreground: 30 7% 12%;
-    --secondary: 30 5% 16%;
-    --secondary-foreground: 40 20% 93%;
-    --muted: 30 5% 15%;
-    --muted-foreground: 35 8% 62%;
-    --accent: 30 5% 17%;
-    --accent-foreground: 40 20% 93%;
-    --destructive: 8 50% 52%;
-    --destructive-foreground: 40 20% 96%;
-    --warning: 30 55% 58%;
-    --success: 95 18% 58%;
-    --border: 30 5% 20%;
-    --input: 30 5% 22%;
-    --ring: 35 10% 60%;
-    --sidebar-background: 30 6% 8%;
-    --sidebar-foreground: 40 20% 93%;
-    --sidebar-primary: 40 20% 92%;
-    --sidebar-primary-foreground: 30 7% 12%;
-    --sidebar-accent: 30 5% 17%;
-    --sidebar-accent-foreground: 40 20% 93%;
-    --sidebar-border: 30 5% 20%;
-    --sidebar-ring: 35 10% 60%;
+    --background: 220 6% 9%;
+    --foreground: 220 8% 92%;
+    --card: 220 6% 13%;
+    --card-foreground: 220 8% 92%;
+    --popover: 220 6% 12%;
+    --popover-foreground: 220 8% 92%;
+    --primary: 220 8% 92%;
+    --primary-foreground: 220 8% 10%;
+    --secondary: 220 5% 18%;
+    --secondary-foreground: 220 8% 92%;
+    --muted: 220 5% 17%;
+    --muted-foreground: 220 5% 62%;
+    --accent: 220 5% 20%;
+    --accent-foreground: 220 8% 92%;
+    --destructive: 4 50% 55%;
+    --destructive-foreground: 220 8% 96%;
+    --warning: 32 50% 58%;
+    --success: 160 16% 55%;
+    --border: 220 5% 24%;
+    --input: 220 5% 26%;
+    --ring: 220 8% 62%;
+    --glass: 220 8% 16%;
+    --glass-edge: 0 0% 100%;
+    --sidebar-background: 220 6% 9%;
+    --sidebar-foreground: 220 8% 92%;
+    --sidebar-primary: 220 8% 92%;
+    --sidebar-primary-foreground: 220 8% 10%;
+    --sidebar-accent: 220 5% 20%;
+    --sidebar-accent-foreground: 220 8% 92%;
+    --sidebar-border: 220 5% 24%;
+    --sidebar-ring: 220 8% 62%;
+  }
+}
+
+@layer components {
+  /* Frosted glass panel */
+  .glass {
+    background-color: hsl(var(--glass) / 0.55);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid hsl(var(--glass-edge) / 0.55);
+    box-shadow:
+      inset 0 1px 0 hsl(var(--glass-edge) / 0.7),
+      0 1px 2px hsl(220 10% 10% / 0.04),
+      0 8px 24px -12px hsl(220 10% 10% / 0.12);
+  }
+  .dark .glass {
+    border-color: hsl(var(--glass-edge) / 0.08);
+    box-shadow: inset 0 1px 0 hsl(var(--glass-edge) / 0.06), 0 8px 24px -12px hsl(0 0% 0% / 0.5);
+  }
+  /* Lighter glass for small controls (inputs, chips, steppers) */
+  .glass-control {
+    background-color: hsl(var(--glass) / 0.6);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
   }
 }
 
@@ -105,5 +133,22 @@
   body {
     @apply bg-background font-sans text-foreground antialiased;
     font-feature-settings: "ss01", "cv11";
+  }
+  /* Board-formed concrete: horizontal timber planks imprinted in the wall — grain, tone shifts per board,
+     recessed seams and staggered butt joints — lit from above like daylight through glass */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(ellipse 90% 60% at 70% -10%, hsl(0 0% 100% / 0.6), transparent 60%),
+      linear-gradient(to bottom, transparent 60%, hsl(var(--foreground) / 0.04)),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='288'%3E%3Cdefs%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006 0.16' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.21 0 0 0 0 0.23 0.8 0 0 0 -0.4'/%3E%3C/filter%3E%3Cfilter id='m' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.008 0.02' numOctaves='3' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.25 0 0 0 0 0.26 0 0 0 0 0.28 0.7 0 0 0 -0.32'/%3E%3C/filter%3E%3Cfilter id='p' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.31 0 0 0 0 0.33 0 0 0 0.14 0'/%3E%3C/filter%3E%3C/defs%3E%3Crect y='48' width='900' height='48' fill='%23000' fill-opacity='0.022'/%3E%3Crect y='96' width='900' height='48' fill='%23000' fill-opacity='0.008'/%3E%3Crect y='144' width='900' height='48' fill='%23000' fill-opacity='0.03'/%3E%3Crect y='192' width='900' height='48' fill='%23000' fill-opacity='0.014'/%3E%3Crect y='240' width='900' height='48' fill='%23000' fill-opacity='0.024'/%3E%3Crect width='900' height='288' filter='url%28%23m%29' opacity='0.5'/%3E%3Crect width='900' height='288' filter='url%28%23g%29' opacity='0.3'/%3E%3Crect width='900' height='288' filter='url%28%23p%29'/%3E%3Crect y='0' width='900' height='1' fill='%23000' fill-opacity='0.09'/%3E%3Crect y='1' width='900' height='1' fill='%23fff' fill-opacity='0.35'/%3E%3Crect y='48' width='900' height='1' fill='%23000' fill-opacity='0.09'/%3E%3Crect y='49' width='900' height='1' fill='%23fff' fill-opacity='0.35'/%3E%3Crect x='610' y='49' width='1' height='47' fill='%23000' fill-opacity='0.05'/%3E%3Crect x='611' y='49' width='1' height='47' fill='%23fff' fill-opacity='0.2'/%3E%3Crect y='96' width='900' height='1' fill='%23000' fill-opacity='0.09'/%3E%3Crect y='97' width='900' height='1' fill='%23fff' fill-opacity='0.35'/%3E%3Crect y='144' width='900' height='1' fill='%23000' fill-opacity='0.09'/%3E%3Crect y='145' width='900' height='1' fill='%23fff' fill-opacity='0.35'/%3E%3Crect x='240' y='145' width='1' height='47' fill='%23000' fill-opacity='0.05'/%3E%3Crect x='241' y='145' width='1' height='47' fill='%23fff' fill-opacity='0.2'/%3E%3Crect y='192' width='900' height='1' fill='%23000' fill-opacity='0.09'/%3E%3Crect y='193' width='900' height='1' fill='%23fff' fill-opacity='0.35'/%3E%3Crect y='240' width='900' height='1' fill='%23000' fill-opacity='0.09'/%3E%3Crect y='241' width='900' height='1' fill='%23fff' fill-opacity='0.35'/%3E%3Crect x='780' y='241' width='1' height='47' fill='%23000' fill-opacity='0.05'/%3E%3Crect x='781' y='241' width='1' height='47' fill='%23fff' fill-opacity='0.2'/%3E%3C/svg%3E");
+    background-size: 100% 100%, 100% 100%, 900px 288px;
+  }
+  .dark body::before {
+    opacity: 0.6;
   }
 }
