@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Grocery Tracker',
+  title: { default: 'Grocery Tracker', template: '%s · Grocery Tracker' },
   description: 'Controlá el stock de tu casa y tu lista de compras',
 }
 
