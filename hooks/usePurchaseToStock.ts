@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useData } from "@/components/providers/DataProvider"
 import { toast } from "@/hooks/use-toast"
 import { findStockItemByName } from "@/lib/grocery"
@@ -18,9 +18,15 @@ function plainLocations(item: GroceryItem) {
 export function usePurchaseToStock() {
   const { items, createGroceryItem, updateGroceryItem, deleteGroceryItem, updateShoppingItem } = useData()
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set())
+  // Latest stock, so several purchases in a row (e.g. from the MasOnline summary) build on each other
+  const itemsRef = useRef(items)
+  useEffect(() => {
+    itemsRef.current = items
+  }, [items])
 
   const addToStock = useCallback(
     async (entry: ShoppingItem) => {
+      const items = itemsRef.current
       const stockItem =
         (entry.groceryItemId && items.find((item) => item.id === entry.groceryItemId)) ||
         findStockItemByName(items, entry.name)
@@ -60,7 +66,7 @@ export function usePurchaseToStock() {
       )
       return { groceryItemId: stockItem.id, stockedLocation: location }
     },
-    [items, createGroceryItem, updateGroceryItem],
+    [createGroceryItem, updateGroceryItem],
   )
 
   /** Undoes `addToStock`. Returns false when the stock item was removed because it ran out. */
@@ -84,14 +90,15 @@ export function usePurchaseToStock() {
   )
 
   const togglePurchased = useCallback(
-    async (entry: ShoppingItem) => {
-      if (busyIds.has(entry.id)) return
+    /** Returns whether the change was saved. */
+    async (entry: ShoppingItem, { silent = false }: { silent?: boolean } = {}): Promise<boolean> => {
+      if (busyIds.has(entry.id)) return false
       setBusyIds((prev) => new Set(prev).add(entry.id))
       try {
         if (!entry.isCompleted) {
           const link = await addToStock(entry)
           await updateShoppingItem(entry.id, { isCompleted: true, ...link })
-          toast({ title: `${entry.name}: +${entry.quantity} al stock`, description: link.stockedLocation })
+          if (!silent) toast({ title: `${entry.name}: +${entry.quantity} al stock`, description: link.stockedLocation })
         } else {
           // Entries checked before this feature existed never touched the stock
           const wasStocked = Boolean(entry.stockedLocation)
@@ -101,10 +108,12 @@ export function usePurchaseToStock() {
             stockedLocation: null,
             ...(stillExists ? {} : { groceryItemId: null }),
           })
-          if (wasStocked) toast({ title: `${entry.name}: −${entry.quantity} del stock` })
+          if (wasStocked && !silent) toast({ title: `${entry.name}: −${entry.quantity} del stock` })
         }
+        return true
       } catch {
         // Errors are already reported by the data layer
+        return false
       } finally {
         setBusyIds((prev) => {
           const next = new Set(prev)

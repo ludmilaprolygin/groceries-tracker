@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { ExternalLink, Loader2, ShoppingCart, Sparkles } from "lucide-react"
+import { ArrowLeft, CheckCheck, ExternalLink, Loader2, ShoppingCart, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "@/hooks/use-toast"
+import { usePurchaseToStock } from "@/hooks/usePurchaseToStock"
 import { MASONLINE_STORE, buildCartUrl, itemKey, type MatchResult, type StoreProduct } from "@/lib/masonline"
 import { supabase } from "@/lib/supabase"
 import type { ShoppingItem } from "@/lib/types"
@@ -47,10 +48,15 @@ export function MasOnlineCartDialog({ items }: MasOnlineCartDialogProps) {
   const [error, setError] = useState<string | null>(null)
   const [results, setResults] = useState<MatchResult[]>([])
   const [selection, setSelection] = useState<Record<string, string>>({})
+  /** The MasOnline cart was opened: show the summary instead of the product pickers. */
+  const [cartOpened, setCartOpened] = useState(false)
+  const [discarding, setDiscarding] = useState(false)
+  const { togglePurchased } = usePurchaseToStock()
 
   const match = async () => {
     setLoading(true)
     setError(null)
+    setCartOpened(false)
     try {
       const { data } = await supabase.auth.getSession()
       const token = data.session?.access_token ?? ""
@@ -86,6 +92,7 @@ export function MasOnlineCartDialog({ items }: MasOnlineCartDialogProps) {
     const product = result.candidates.find((c) => c.sku === selection[result.itemId])
     return product ? [{ result, product }] : []
   })
+  const leftOut = results.filter((result) => !chosen.some((c) => c.result.itemId === result.itemId))
   const total = chosen.reduce((sum, { result, product }) => sum + product.price * result.quantity, 0)
   const cartUrl = buildCartUrl(chosen.map(({ result, product }) => ({ ...product, quantity: result.quantity })))
 
@@ -99,6 +106,34 @@ export function MasOnlineCartDialog({ items }: MasOnlineCartDialogProps) {
     }))
     const { error } = await supabase.from("store_product_choices").upsert(rows)
     if (error) toast({ title: "No se pudieron guardar tus elecciones", variant: "destructive" })
+  }
+
+  const openCart = () => {
+    setCartOpened(true)
+    rememberChoices()
+  }
+
+  /** Marks what went to MasOnline as bought (adding it to the stock); the left-out items stay pending. */
+  const discardBought = async () => {
+    if (discarding) return
+    setDiscarding(true)
+    let done = 0
+    try {
+      // One at a time: entries can share a stock item, and each update builds on the previous one
+      for (const { result } of chosen) {
+        const entry = items.find((item) => item.id === result.itemId)
+        if (entry && !entry.isCompleted && (await togglePurchased(entry, { silent: true }))) done++
+      }
+    } finally {
+      setDiscarding(false)
+    }
+    toast({
+      title: `${done} ${done === 1 ? "producto marcado" : "productos marcados"} como comprado${done === 1 ? "" : "s"}`,
+      description: leftOut.length
+        ? `${leftOut.length} ${leftOut.length === 1 ? "queda" : "quedan"} en la lista de compras.`
+        : "Se sumaron al stock.",
+    })
+    if (done === chosen.length) handleOpenChange(false)
   }
 
   return (
@@ -136,6 +171,8 @@ export function MasOnlineCartDialog({ items }: MasOnlineCartDialogProps) {
                 Reintentar
               </Button>
             </div>
+          ) : cartOpened ? (
+            <CartSummary sent={chosen.length} leftOut={leftOut} />
           ) : (
             <ul className="divide-y divide-border/70">
               {results.map((result) => (
@@ -150,7 +187,18 @@ export function MasOnlineCartDialog({ items }: MasOnlineCartDialogProps) {
           )}
         </div>
 
-        {!loading && !error && results.length > 0 && (
+        {!loading && !error && cartOpened && (
+          <div className="flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-between">
+            <Button variant="ghost" onClick={() => setCartOpened(false)} disabled={discarding}>
+              <ArrowLeft /> Volver a elegir
+            </Button>
+            <Button onClick={discardBought} disabled={discarding || chosen.length === 0}>
+              {discarding ? <Loader2 className="animate-spin" /> : <CheckCheck />} Descartar productos comprados
+            </Button>
+          </div>
+        )}
+
+        {!loading && !error && !cartOpened && results.length > 0 && (
           <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm">
               {chosen.length} de {results.length} items ·{" "}
@@ -163,7 +211,7 @@ export function MasOnlineCartDialog({ items }: MasOnlineCartDialogProps) {
               </Button>
             ) : (
               <Button asChild>
-                <a href={cartUrl} target="_blank" rel="noopener noreferrer" onClick={rememberChoices}>
+                <a href={cartUrl} target="_blank" rel="noopener noreferrer" onClick={openCart}>
                   Abrir changuito <ExternalLink />
                 </a>
               </Button>
@@ -229,5 +277,37 @@ function ProductLine({ product }: { product: StoreProduct }) {
         <span className="text-xs tabular-nums text-muted-foreground">{formatPrice(product.price)}</span>
       </span>
     </span>
+  )
+}
+
+function CartSummary({ sent, leftOut }: { sent: number; leftOut: MatchResult[] }) {
+  return (
+    <div className="space-y-4 py-2">
+      <p className="text-sm">
+        Mandaste <span className="font-medium">{sent}</span> {sent === 1 ? "producto" : "productos"} al changuito de
+        MasOnline. Cuando termines la compra, descartalos de la lista: se marcan como comprados y se suman al stock.
+      </p>
+
+      {leftOut.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No quedó nada afuera.</p>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">
+            {leftOut.length === 1 ? "Queda 1 producto" : `Quedan ${leftOut.length} productos`} en la lista de compras
+          </p>
+          <ul className="divide-y divide-border/70 rounded-md border border-border/70">
+            {leftOut.map((result) => (
+              <li key={result.itemId} className="flex items-center gap-2 px-3 py-2">
+                <span className="truncate text-sm">{result.name}</span>
+                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">×{result.quantity}</span>
+                <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                  {result.candidates.length === 0 ? "No está en MasOnline" : "No agregado"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   )
 }
