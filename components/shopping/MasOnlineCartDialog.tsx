@@ -22,6 +22,20 @@ const SOURCE_LABEL: Record<MatchResult["source"], string | null> = {
   none: null,
 }
 
+/** The match API takes at most 40 items and has 30 s per call, so long lists go in smaller batches. */
+const BATCH_SIZE = 20
+const PARALLEL_BATCHES = 2
+
+async function matchBatch(batch: ShoppingItem[], accessToken: string): Promise<MatchResult[]> {
+  const res = await fetch("/api/masonline/match", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ items: batch.map(({ id, name, quantity }) => ({ id, name, quantity })) }),
+  })
+  if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? `Error ${res.status}`)
+  return ((await res.json()) as { results: MatchResult[] }).results
+}
+
 interface MasOnlineCartDialogProps {
   items: ShoppingItem[]
 }
@@ -39,13 +53,20 @@ export function MasOnlineCartDialog({ items }: MasOnlineCartDialogProps) {
     setError(null)
     try {
       const { data } = await supabase.auth.getSession()
-      const res = await fetch("/api/masonline/match", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token ?? ""}` },
-        body: JSON.stringify({ items: items.map(({ id, name, quantity }) => ({ id, name, quantity })) }),
-      })
-      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? `Error ${res.status}`)
-      const { results } = (await res.json()) as { results: MatchResult[] }
+      const token = data.session?.access_token ?? ""
+      const batches: ShoppingItem[][] = []
+      for (let i = 0; i < items.length; i += BATCH_SIZE) batches.push(items.slice(i, i + BATCH_SIZE))
+
+      const batchResults: MatchResult[][] = new Array(batches.length)
+      let next = 0
+      const worker = async () => {
+        while (next < batches.length) {
+          const i = next++
+          batchResults[i] = await matchBatch(batches[i], token)
+        }
+      }
+      await Promise.all(Array.from({ length: Math.min(PARALLEL_BATCHES, batches.length) }, worker))
+      const results = batchResults.flat()
       setResults(results)
       setSelection(Object.fromEntries(results.map((r) => [r.itemId, r.selectedSku ?? NONE])))
     } catch (err) {
